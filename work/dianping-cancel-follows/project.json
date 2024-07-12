@@ -1,0 +1,13 @@
+{
+    "name": "dianping-cancel-follows",
+    "main": "cancel_follows.js",
+    "ignore": [
+        "build"
+    ],
+    "launchConfig": {
+        "hideLogs": false
+    },
+    "packageName": "com.example.dianping-cancel-follows",
+    "versionName": "1.0.0",
+    "versionCode": 0
+}

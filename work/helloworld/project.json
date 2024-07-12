@@ -1,0 +1,13 @@
+{
+    "name": "helloworld",
+    "main": "main.js",
+    "ignore": [
+        "build"
+    ],
+    "launchConfig": {
+        "hideLogs": true
+    },
+    "packageName": "com.example.helloworld",
+    "versionName": "1.5.0",
+    "versionCode": 5
+}

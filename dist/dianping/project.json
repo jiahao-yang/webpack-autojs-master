@@ -1,0 +1,13 @@
+{
+    "name": "dianping",
+    "main": "main.js",
+    "ignore": [
+        "build"
+    ],
+    "launchConfig": {
+        "hideLogs": true
+    },
+    "packageName": "com.example.dianping",
+    "versionName": "1.0.0",
+    "versionCode": 0
+}

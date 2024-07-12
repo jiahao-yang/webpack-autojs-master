@@ -1,0 +1,11 @@
+{
+  "name": "小猪消消乐",
+  "main": "main.js",
+  "ignore": ["build"],
+  "launchConfig": {
+    "hideLogs": true
+  },
+  "packageName": "com.xiaoxiaole",
+  "versionName": "1.0.0",
+  "versionCode": 0
+}
