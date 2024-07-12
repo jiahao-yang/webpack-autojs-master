@@ -3,288 +3,289 @@
 本软件可以免费使用，但是不允许二次开发、以及销售，如需获得最的更多apk 请联系作者。
 开源库地址：https://github.com/kkevsekk1/webpack-autojs
 **/
-function a1_0x24d5(_0x2b88ad, _0x1317be) {
-    var _0x24d5b3 = a1_0x1317();
-    return a1_0x24d5 = function (_0x2ccd94, _0x3eda37) {
-        _0x2ccd94 = _0x2ccd94 - 0x121;
-        var _0x258c88 = _0x24d5b3[_0x2ccd94];
-        return _0x258c88;
-    }, a1_0x24d5(_0x2b88ad, _0x1317be);
+function a1_0x3d66(_0x155295, _0x59875a) {
+    const _0x3d6644 = a1_0x5987();
+    return a1_0x3d66 = function (_0x55342b, _0x4da58f) {
+        _0x55342b = _0x55342b - 0xb2;
+        let _0x25070e = _0x3d6644[_0x55342b];
+        return _0x25070e;
+    }, a1_0x3d66(_0x155295, _0x59875a);
 }
-function a1_0x1317() {
-    var _0x1b1583 = [
-        '，页面已变化。',
-        '笔记达人中心',
-        '点击去获得',
-        '成功点击笔记达人中心',
-        'visibleToUser',
-        'string',
-        '不在广州榜页面，无法继续操作。',
-        'text',
-        'centerY',
-        'Error:\x20',
-        '成功点击查看排名',
-        'android.widget.TextView',
-        'launch\x20the\x20app',
-        'find',
-        '\x20not\x20found,\x20attempting\x20to\x20scroll\x20(',
-        '\x20after\x20',
-        'undefined',
-        'current\x20package:\x20',
-        'toStringTag',
-        'launchApp',
-        'concat',
-        'height',
-        '发消息',
+function a1_0x5987() {
+    const _0x4fa7c2 = [
         'centerX',
-        'exists',
-        'prototype',
+        '不在广州榜页面，无法继续操作。',
+        'toStringTag',
+        '操作取消',
+        '未找到去获得按钮',
+        'start\x20the\x20app',
+        'Module',
+        '__esModule',
+        '起始索引不能大于结束索引',
+        'findOnce',
         'call',
+        '未找到笔记达人中心按钮',
+        './work/dianping/main.js',
+        'exports',
+        '成功点击第二个关注',
+        '\x20is\x20found.',
+        'exists',
+        '未找到查看排名按钮',
+        'create',
+        '滑动屏幕',
+        'launchApp',
+        'undefined',
+        'find',
+        'waitFor',
+        'user_ranking\x20',
+        'floor',
+        'prototype',
+        '点击查看排名',
+        'bind',
+        '大众点评',
+        'message',
+        'text',
+        '，页面已变化。',
+        '\x20次上划屏幕失败，重试中...',
+        '输入的不是有效的数字，请重新运行脚本。',
+        '尝试\x20',
+        '\x20after\x20',
+        '成功点击user_ranking\x20',
+        'error',
+        'launch\x20the\x20app',
+        '成功点击抽百元套餐',
+        '找到动态，表示已进入用户主页。',
+        'Not\x20on\x20the\x20user\x20ranking\x20page,\x20quit.',
+        '发消息',
         'length',
         '请输入结束索引:',
-        '抽百元套餐',
-        '\x20is\x20found.',
-        'All\x20iterations\x20completed\x20without\x20issues.',
-        '未找到抽百元套餐按钮',
-        'width',
-        '上划屏幕第',
-        '\x20scrolling\x20attempts.',
-        '请输入起始索引:',
-        '找到发消息,\x20表示已关注',
-        'bounds',
-        'findOnce',
-        '点击笔记达人中心',
-        'object',
-        '成功点击我的',
         'default',
-        '点击后页面未发生变化，可能点击未生效。',
-        '未找到查看排名按钮',
-        '大众点评',
-        '操作取消',
-        'exports',
+        'com.dianping.v1',
+        '成功点击笔记达人中心',
+        '成功点击我的',
         'input',
-        '找到动态，表示已进入用户主页。',
-        '\x20次上划屏幕失败，重试中...',
-        'Module',
-        './work/dianping/main.js',
-        'defineProperty',
-        'waitFor',
-        'boundsInside',
-        '__esModule',
-        'floor',
-        '未找到第二个关注按钮',
-        'bind',
-        '尝试\x20',
-        '查看排名',
-        'message',
-        '点击查看排名',
-        'hasOwnProperty',
-        '起始索引不能大于结束索引',
+        'current\x20package:\x20',
+        '成功点击去获得',
+        'android.widget.TextView',
+        '请输入起始索引:',
+        'width',
+        '进入首页,\x20点击我的',
+        'All\x20iterations\x20completed\x20without\x20issues.',
+        'centerY',
+        '笔记达人中心',
+        'height',
+        'bounds',
+        '上划屏幕第',
+        '未找到动态，表示页面未加载完全。',
         '广州榜',
-        '成功点击第二个关注',
-        'user_ranking\x20'
+        'Error:\x20',
+        'defineProperty'
     ];
-    a1_0x1317 = function () {
-        return _0x1b1583;
+    a1_0x5987 = function () {
+        return _0x4fa7c2;
     };
-    return a1_0x1317();
+    return a1_0x5987();
 }
-(function (_0x2a0803) {
-    var _0x1d5b2b = a1_0x24d5, _0x19bfd8 = {};
-    function _0x48b4b9(_0x525528) {
-        var _0x1ce2e3 = a1_0x24d5;
-        if (_0x19bfd8[_0x525528])
-            return _0x19bfd8[_0x525528][_0x1ce2e3(0x151)];
-        var _0x381492 = _0x19bfd8[_0x525528] = {
-            'i': _0x525528,
+(function (_0x3d02f0) {
+    const _0x2e009d = a1_0x3d66;
+    var _0x1e67ea = {};
+    function _0x5d037a(_0x273e46) {
+        const _0x461083 = a1_0x3d66;
+        if (_0x1e67ea[_0x273e46])
+            return _0x1e67ea[_0x273e46][_0x461083(0xbf)];
+        var _0x1dd68b = _0x1e67ea[_0x273e46] = {
+            'i': _0x273e46,
             'l': ![],
             'exports': {}
         };
-        return _0x2a0803[_0x525528][_0x1ce2e3(0x13b)](_0x381492[_0x1ce2e3(0x151)], _0x381492, _0x381492[_0x1ce2e3(0x151)], _0x48b4b9), _0x381492['l'] = !![], _0x381492[_0x1ce2e3(0x151)];
+        return _0x3d02f0[_0x273e46][_0x461083(0xbc)](_0x1dd68b[_0x461083(0xbf)], _0x1dd68b, _0x1dd68b[_0x461083(0xbf)], _0x5d037a), _0x1dd68b['l'] = !![], _0x1dd68b[_0x461083(0xbf)];
     }
-    return _0x48b4b9['m'] = _0x2a0803, _0x48b4b9['c'] = _0x19bfd8, _0x48b4b9['d'] = function (_0x380e61, _0x328911, _0x40c1b6) {
-        !_0x48b4b9['o'](_0x380e61, _0x328911) && Object['defineProperty'](_0x380e61, _0x328911, {
+    return _0x5d037a['m'] = _0x3d02f0, _0x5d037a['c'] = _0x1e67ea, _0x5d037a['d'] = function (_0x395656, _0x159f53, _0x17aaa3) {
+        const _0x53e166 = a1_0x3d66;
+        !_0x5d037a['o'](_0x395656, _0x159f53) && Object[_0x53e166(0xf4)](_0x395656, _0x159f53, {
             'enumerable': !![],
-            'get': _0x40c1b6
+            'get': _0x17aaa3
         });
-    }, _0x48b4b9['r'] = function (_0x458e6b) {
-        var _0x353d85 = a1_0x24d5;
-        typeof Symbol !== _0x353d85(0x131) && Symbol[_0x353d85(0x133)] && Object[_0x353d85(0x157)](_0x458e6b, Symbol[_0x353d85(0x133)], { 'value': _0x353d85(0x155) }), Object[_0x353d85(0x157)](_0x458e6b, '__esModule', { 'value': !![] });
-    }, _0x48b4b9['t'] = function (_0x210182, _0x3a034d) {
-        var _0x263369 = a1_0x24d5;
-        if (_0x3a034d & 0x1)
-            _0x210182 = _0x48b4b9(_0x210182);
-        if (_0x3a034d & 0x8)
-            return _0x210182;
-        if (_0x3a034d & 0x4 && typeof _0x210182 === _0x263369(0x14a) && _0x210182 && _0x210182[_0x263369(0x15a)])
-            return _0x210182;
-        var _0x50ccd0 = Object['create'](null);
-        _0x48b4b9['r'](_0x50ccd0), Object['defineProperty'](_0x50ccd0, _0x263369(0x14c), {
+    }, _0x5d037a['r'] = function (_0x83be68) {
+        const _0x487765 = a1_0x3d66;
+        typeof Symbol !== _0x487765(0xc7) && Symbol[_0x487765(0xb4)] && Object[_0x487765(0xf4)](_0x83be68, Symbol['toStringTag'], { 'value': _0x487765(0xb8) }), Object['defineProperty'](_0x83be68, _0x487765(0xb9), { 'value': !![] });
+    }, _0x5d037a['t'] = function (_0x28f0ff, _0x5f585c) {
+        const _0x4e14b3 = a1_0x3d66;
+        if (_0x5f585c & 0x1)
+            _0x28f0ff = _0x5d037a(_0x28f0ff);
+        if (_0x5f585c & 0x8)
+            return _0x28f0ff;
+        if (_0x5f585c & 0x4 && typeof _0x28f0ff === 'object' && _0x28f0ff && _0x28f0ff[_0x4e14b3(0xb9)])
+            return _0x28f0ff;
+        var _0x1e9e41 = Object[_0x4e14b3(0xc4)](null);
+        _0x5d037a['r'](_0x1e9e41), Object['defineProperty'](_0x1e9e41, 'default', {
             'enumerable': !![],
-            'value': _0x210182
+            'value': _0x28f0ff
         });
-        if (_0x3a034d & 0x2 && typeof _0x210182 != _0x263369(0x126)) {
-            for (var _0x23f853 in _0x210182)
-                _0x48b4b9['d'](_0x50ccd0, _0x23f853, function (_0xe93f18) {
-                    return _0x210182[_0xe93f18];
-                }[_0x263369(0x15d)](null, _0x23f853));
+        if (_0x5f585c & 0x2 && typeof _0x28f0ff != 'string') {
+            for (var _0x11bd65 in _0x28f0ff)
+                _0x5d037a['d'](_0x1e9e41, _0x11bd65, function (_0x4c9eb9) {
+                    return _0x28f0ff[_0x4c9eb9];
+                }[_0x4e14b3(0xce)](null, _0x11bd65));
         }
-        return _0x50ccd0;
-    }, _0x48b4b9['n'] = function (_0x4c41ba) {
-        var _0x8dfc8f = _0x4c41ba && _0x4c41ba['__esModule'] ? function _0x5a4ed6() {
-            var _0x551f2b = a1_0x24d5;
-            return _0x4c41ba[_0x551f2b(0x14c)];
-        } : function _0x322cba() {
-            return _0x4c41ba;
+        return _0x1e9e41;
+    }, _0x5d037a['n'] = function (_0x4ef73e) {
+        const _0x5a061c = a1_0x3d66;
+        var _0xcc229d = _0x4ef73e && _0x4ef73e[_0x5a061c(0xb9)] ? function _0x376daf() {
+            const _0x325a95 = _0x5a061c;
+            return _0x4ef73e[_0x325a95(0xe0)];
+        } : function _0x522dee() {
+            return _0x4ef73e;
         };
-        return _0x48b4b9['d'](_0x8dfc8f, 'a', _0x8dfc8f), _0x8dfc8f;
-    }, _0x48b4b9['o'] = function (_0x3a83be, _0x3d407d) {
-        var _0x7f5c15 = a1_0x24d5;
-        return Object[_0x7f5c15(0x13a)][_0x7f5c15(0x162)][_0x7f5c15(0x13b)](_0x3a83be, _0x3d407d);
-    }, _0x48b4b9['p'] = '', _0x48b4b9(_0x48b4b9['s'] = _0x1d5b2b(0x156));
+        return _0x5d037a['d'](_0xcc229d, 'a', _0xcc229d), _0xcc229d;
+    }, _0x5d037a['o'] = function (_0xc3fa2e, _0x318ceb) {
+        const _0x184696 = a1_0x3d66;
+        return Object[_0x184696(0xcc)]['hasOwnProperty'][_0x184696(0xbc)](_0xc3fa2e, _0x318ceb);
+    }, _0x5d037a['p'] = '', _0x5d037a(_0x5d037a['s'] = _0x2e009d(0xbe));
 }({
-    './work/dianping/main.js': function (_0x30c9b2, _0x26b52a) {
-        var _0x1487f6 = a1_0x24d5;
-        function _0x3f7b3f(_0x4f928c) {
-            var _0x1d7131 = a1_0x24d5, _0x296d65 = arguments['length'] > 0x1 && arguments[0x1] !== undefined ? arguments[0x1] : 0x0, _0x58a85c = arguments[_0x1d7131(0x13c)] > 0x2 && arguments[0x2] !== undefined ? arguments[0x2] : 0x0;
-            if (_0x4f928c[_0x1d7131(0x139)]()) {
-                var _0x26177d = _0x4f928c['findOnce']();
-                if (_0x26177d) {
-                    var _0x24ec01 = _0x26177d['bounds']();
-                    if (_0x24ec01)
-                        return click(_0x24ec01[_0x1d7131(0x138)]() + _0x296d65, _0x24ec01['centerY']() + _0x58a85c), !![];
+    './work/dianping/main.js': function (_0x3d450d, _0x808000, _0x5892a7) {
+        'use strict';
+        const _0x145328 = a1_0x3d66;
+        function _0x30537b(_0x2fe5f1, _0x7a5e13 = 0x0, _0x2c4e57 = 0x0) {
+            const _0x4f7543 = a1_0x3d66;
+            if (_0x2fe5f1[_0x4f7543(0xc2)]()) {
+                var _0x2cf774 = _0x2fe5f1[_0x4f7543(0xbb)]();
+                if (_0x2cf774) {
+                    var _0x81188a = _0x2cf774['bounds']();
+                    if (_0x81188a)
+                        return click(_0x81188a[_0x4f7543(0xb2)]() + _0x7a5e13, _0x81188a['centerY']() + _0x2c4e57), !![];
                 }
             }
             return ![];
         }
-        function _0x2a40a7(_0xe755e3, _0x4a9b5e, _0x4ed84a, _0x2d5b90, _0x3294e0, _0xf92391, _0x2078ba) {
-            var _0x3ee943 = a1_0x24d5, _0x3dadb0 = 0x3, _0x904c6a = 0x3e8;
-            for (var _0x25e6bc = 0x0; _0x25e6bc < _0x2078ba; _0x25e6bc++) {
-                var _0x4e940a = 0x0;
-                while (_0x4e940a < _0x3dadb0) {
+        function _0x5d71bf(_0x4e279b, _0x35c3d1, _0x36339c, _0x2ad9ed, _0x2dacd7, _0x5cbb91, _0x3638fb) {
+            const _0x331087 = a1_0x3d66, _0x1f5d7d = 0x3, _0x3cc7b5 = 0x3e8;
+            for (let _0x2f3256 = 0x0; _0x2f3256 < _0x3638fb; _0x2f3256++) {
+                let _0x4fd6ad = 0x0;
+                while (_0x4fd6ad < _0x1f5d7d) {
                     try {
-                        toastLog(_0x3ee943(0x143)[_0x3ee943(0x135)](_0x25e6bc + 0x1, '次')), swipe(_0xe755e3, _0x4a9b5e, _0x4ed84a, _0x2d5b90, _0x3294e0), setTimeout(function () {
-                        }, _0xf92391);
+                        toastLog(_0x331087(0xf0) + (_0x2f3256 + 0x1) + '次'), swipe(_0x4e279b, _0x35c3d1, _0x36339c, _0x2ad9ed, _0x2dacd7), setTimeout(() => {
+                        }, _0x5cbb91);
                         break;
-                    } catch (_0x523823) {
-                        console['error'](_0x3ee943(0x15e)['concat'](_0x25e6bc + 0x1, _0x3ee943(0x154))), _0x4e940a++, setTimeout(function () {
-                        }, _0x904c6a);
+                    } catch (_0x2aa0b3) {
+                        console[_0x331087(0xd8)](_0x331087(0xd5) + (_0x2f3256 + 0x1) + _0x331087(0xd3)), _0x4fd6ad++, setTimeout(() => {
+                        }, _0x3cc7b5);
                     }
                 }
             }
         }
-        function _0x2b1ba4() {
-            var _0x29683b = a1_0x24d5;
-            swipe(device[_0x29683b(0x142)] / 0x2, device[_0x29683b(0x136)] * 0.9, device[_0x29683b(0x142)] / 0x2, device[_0x29683b(0x136)] * 0.5, 0x3e8);
+        function _0x2ebba9() {
+            const _0x30800c = a1_0x3d66;
+            swipe(device[_0x30800c(0xe9)] / 0x2, device[_0x30800c(0xee)] * 0.9, device[_0x30800c(0xe9)] / 0x2, device['height'] * 0.5, 0x3e8);
         }
-        function _0x50f42e() {
-            var _0x41718d = a1_0x24d5, _0x4ba4e0 = arguments[_0x41718d(0x13c)] > 0x0 && arguments[0x0] !== undefined ? arguments[0x0] : 0x1 / 0x3, _0x2b3ea3 = device[_0x41718d(0x136)], _0xa9fe37 = Math[_0x41718d(0x15b)](_0x2b3ea3 * _0x4ba4e0);
-            swipe(device[_0x41718d(0x142)] / 0x2, device['height'] * (0x1 - _0x4ba4e0), device[_0x41718d(0x142)] / 0x2, device[_0x41718d(0x136)] * (0x1 - _0x4ba4e0) + _0xa9fe37, 0x1f4);
+        function _0x26b597(_0x2ac083 = 0x1 / 0x3) {
+            const _0xaaa1e0 = a1_0x3d66, _0x849ce = device[_0xaaa1e0(0xee)], _0x515c5d = Math[_0xaaa1e0(0xcb)](_0x849ce * _0x2ac083);
+            swipe(device[_0xaaa1e0(0xe9)] / 0x2, device[_0xaaa1e0(0xee)] * (0x1 - _0x2ac083), device[_0xaaa1e0(0xe9)] / 0x2, device[_0xaaa1e0(0xee)] * (0x1 - _0x2ac083) + _0x515c5d, 0x1f4);
         }
-        function _0x3947fa() {
-            var _0x151238 = a1_0x24d5, _0x3f24a1 = className(_0x151238(0x12c))['text'](_0x151238(0x164)), _0x4e6752 = _0x3f24a1['exists']();
-            return _0x4e6752;
+        function _0x1e0ff0() {
+            const _0x142450 = a1_0x3d66, _0x34c08e = className('android.widget.TextView')[_0x142450(0xd1)](_0x142450(0xf2)), _0xa8a75c = _0x34c08e['exists']();
+            return _0xa8a75c;
         }
-        function _0x29aa56(_0xf81441, _0x182330) {
-            var _0x5f5381 = a1_0x24d5, _0x26d240 = 0x69 / 0x2 + 0x5, _0xaddedf = 0x1, _0x446c3d = 0xb4;
-            function _0x472e1c() {
-                var _0x17dc68 = a1_0x24d5, _0x2b6856 = arguments[_0x17dc68(0x13c)] > 0x0 && arguments[0x0] !== undefined ? arguments[0x0] : 0x1 / 0x3, _0x39e9d1 = device['height'], _0x14c967 = Math[_0x17dc68(0x15b)](_0x39e9d1 * _0x2b6856);
-                swipe(device[_0x17dc68(0x142)] / 0x2, device[_0x17dc68(0x136)] * (0x1 - _0x2b6856), device[_0x17dc68(0x142)] / 0x2, device[_0x17dc68(0x136)] * (0x1 - _0x2b6856) + _0x14c967, 0x1f4);
+        function _0x105fec(_0x576871, _0x482dc3) {
+            const _0x283c11 = a1_0x3d66, _0x1a9e09 = 0x69 / 0x2 + 0x5, _0x36955d = 0x1, _0x20c557 = 0xb4;
+            function _0x5cf80d(_0x76aedf = 0x1 / 0x3) {
+                const _0x4d2846 = a1_0x3d66, _0x4400fa = device[_0x4d2846(0xee)], _0x347493 = Math[_0x4d2846(0xcb)](_0x4400fa * _0x76aedf);
+                swipe(device[_0x4d2846(0xe9)] / 0x2, device[_0x4d2846(0xee)] * (0x1 - _0x76aedf), device[_0x4d2846(0xe9)] / 0x2, device[_0x4d2846(0xee)] * (0x1 - _0x76aedf) + _0x347493, 0x1f4);
             }
-            for (var _0x4389bf = _0xf81441; _0x4389bf <= _0x182330; _0x4389bf++) {
-                if (!_0x3947fa())
-                    return toastLog(_0x5f5381(0x127)), ![];
-                var _0x86e06e = 0x0, _0x2f76bd = ![];
-                while (!_0x2f76bd && _0x86e06e <= _0xaddedf) {
-                    user_ranking = className('android.widget.TextView')[_0x5f5381(0x128)](''[_0x5f5381(0x135)](_0x4389bf))[_0x5f5381(0x159)](0x0, 0x0, device[_0x5f5381(0x142)] / 0x3, device[_0x5f5381(0x136)] - _0x446c3d)[_0x5f5381(0x125)](!![])[_0x5f5381(0x148)]();
+            for (let _0x205e55 = _0x576871; _0x205e55 <= _0x482dc3; _0x205e55++) {
+                if (!_0x1e0ff0())
+                    return toastLog(_0x283c11(0xb3)), ![];
+                let _0x4cc8d9 = 0x0, _0x11dddf = ![];
+                while (!_0x11dddf && _0x4cc8d9 <= _0x36955d) {
+                    user_ranking = className(_0x283c11(0xe7))[_0x283c11(0xd1)]('' + _0x205e55)['boundsInside'](0x0, 0x0, device[_0x283c11(0xe9)] / 0x3, device[_0x283c11(0xee)] - _0x20c557)['visibleToUser'](!![])[_0x283c11(0xbb)]();
                     if (user_ranking) {
-                        toastLog('user_ranking\x20'['concat'](_0x4389bf, _0x5f5381(0x13f))), click(user_ranking[_0x5f5381(0x147)]()[_0x5f5381(0x138)]() + _0x26d240, user_ranking['bounds']()[_0x5f5381(0x129)]()), sleep(random(0x3e8, 0x7d0));
-                        if (!_0x3947fa()) {
-                            toastLog('成功点击user_ranking\x20'[_0x5f5381(0x135)](_0x4389bf, _0x5f5381(0x121))), _0x2f76bd = !![];
-                            if (text('动态')[_0x5f5381(0x139)]())
-                                toastLog(_0x5f5381(0x153));
+                        toastLog(_0x283c11(0xca) + _0x205e55 + _0x283c11(0xc1)), click(user_ranking['bounds']()[_0x283c11(0xb2)]() + _0x1a9e09, user_ranking['bounds']()[_0x283c11(0xec)]()), sleep(random(0x3e8, 0x7d0));
+                        if (!_0x1e0ff0()) {
+                            toastLog(_0x283c11(0xd7) + _0x205e55 + _0x283c11(0xd2)), _0x11dddf = !![];
+                            if (text('动态')[_0x283c11(0xc2)]())
+                                toastLog(_0x283c11(0xdb));
                             else
-                                return toastLog('未找到动态，表示页面未加载完全。'), ![];
+                                return toastLog(_0x283c11(0xf1)), ![];
                             sleep(random(0x1388, 0x1f40));
-                            if (text(_0x5f5381(0x137))[_0x5f5381(0x139)]())
-                                toastLog(_0x5f5381(0x146));
+                            if (text(_0x283c11(0xdd))['exists']())
+                                toastLog('找到发消息,\x20表示已关注');
                             else {
-                                var _0xdef211 = text('关注')[_0x5f5381(0x12e)]();
-                                _0xdef211[_0x5f5381(0x13c)] > 0x1 ? (click(_0xdef211[0x1][_0x5f5381(0x147)]()[_0x5f5381(0x138)](), _0xdef211[0x1][_0x5f5381(0x147)]()[_0x5f5381(0x129)]()), toastLog(_0x5f5381(0x165)), sleep(random(0xbb8, 0x1388))) : toastLog(_0x5f5381(0x15c));
+                                var _0x836e09 = text('关注')[_0x283c11(0xc8)]();
+                                _0x836e09[_0x283c11(0xde)] > 0x1 ? (click(_0x836e09[0x1][_0x283c11(0xef)]()[_0x283c11(0xb2)](), _0x836e09[0x1]['bounds']()[_0x283c11(0xec)]()), toastLog(_0x283c11(0xc0)), sleep(random(0xbb8, 0x1388))) : toastLog('未找到第二个关注按钮');
                             }
                             back(), sleep(0x7d0);
                         } else {
-                            toastLog(_0x5f5381(0x14d)), _0x86e06e++, toastLog('Attempting\x20to\x20scroll\x20('['concat'](_0x86e06e, '/')[_0x5f5381(0x135)](_0xaddedf, ').')), _0x2b1ba4(), sleep(0x7d0);
+                            toastLog('点击后页面未发生变化，可能点击未生效。'), _0x4cc8d9++, toastLog('Attempting\x20to\x20scroll\x20(' + _0x4cc8d9 + '/' + _0x36955d + ').'), _0x2ebba9(), sleep(0x7d0);
                             continue;
                         }
                     } else
-                        _0x86e06e++, toastLog(_0x5f5381(0x166)['concat'](_0x4389bf, _0x5f5381(0x12f))['concat'](_0x86e06e, '/')['concat'](_0xaddedf, ').')), _0x2b1ba4(), sleep(0x7d0);
+                        _0x4cc8d9++, toastLog('user_ranking\x20' + _0x205e55 + '\x20not\x20found,\x20attempting\x20to\x20scroll\x20(' + _0x4cc8d9 + '/' + _0x36955d + ').'), _0x2ebba9(), sleep(0x7d0);
                 }
-                if (_0x86e06e >= _0xaddedf && !_0x2f76bd)
-                    return toastLog('Failed\x20to\x20interact\x20with\x20user_ranking\x20'[_0x5f5381(0x135)](_0x4389bf, _0x5f5381(0x130))[_0x5f5381(0x135)](_0x86e06e, _0x5f5381(0x144))), ![];
+                if (_0x4cc8d9 >= _0x36955d && !_0x11dddf)
+                    return toastLog('Failed\x20to\x20interact\x20with\x20user_ranking\x20' + _0x205e55 + _0x283c11(0xd6) + _0x4cc8d9 + '\x20scrolling\x20attempts.'), ![];
                 sleep(random(0x3e8, 0xbb8));
             }
             return !![];
         }
         function main() {
-            var _0x1bd984 = a1_0x24d5, _0x50feb9 = 'com.dianping.v1', _0x825188 = _0x1bd984(0x14f);
-            toastLog('start\x20the\x20app');
-            var _0x16580d = dialogs['input'](_0x1bd984(0x145));
-            if (!_0x16580d) {
-                toastLog(_0x1bd984(0x150));
+            const _0x3b12c4 = a1_0x3d66, _0x1a7c7f = _0x3b12c4(0xe1), _0x152786 = _0x3b12c4(0xcf);
+            toastLog(_0x3b12c4(0xb7));
+            const _0x5e2bb8 = dialogs[_0x3b12c4(0xe4)](_0x3b12c4(0xe8));
+            if (!_0x5e2bb8) {
+                toastLog(_0x3b12c4(0xb5));
                 return;
             }
-            var _0x59fcdf = dialogs[_0x1bd984(0x152)](_0x1bd984(0x13d));
-            if (!_0x59fcdf) {
-                toastLog('操作取消');
+            const _0xa76d36 = dialogs['input'](_0x3b12c4(0xdf));
+            if (!_0xa76d36) {
+                toastLog(_0x3b12c4(0xb5));
                 return;
             } else {
-                if (_0x16580d > _0x59fcdf) {
-                    toastLog(_0x1bd984(0x163));
+                if (_0x5e2bb8 > _0xa76d36) {
+                    toastLog(_0x3b12c4(0xba));
                     return;
                 }
             }
-            var _0x27d25 = parseInt(_0x16580d, 0xa), _0x453896 = parseInt(_0x59fcdf, 0xa);
-            if (isNaN(_0x27d25) || isNaN(_0x453896)) {
-                toastLog('输入的不是有效的数字，请重新运行脚本。');
+            const _0x29b9e8 = parseInt(_0x5e2bb8, 0xa), _0x3e22ea = parseInt(_0xa76d36, 0xa);
+            if (isNaN(_0x29b9e8) || isNaN(_0x3e22ea)) {
+                toastLog(_0x3b12c4(0xd4));
                 return;
             }
             try {
-                toastLog(_0x1bd984(0x132)[_0x1bd984(0x135)](currentPackage()));
-                currentPackage() !== _0x50feb9 && (toastLog(_0x1bd984(0x12d)), app[_0x1bd984(0x134)](_0x825188), sleep(0xbb8), toastLog(_0x1bd984(0x132)['concat'](currentPackage())));
-                if (!_0x3947fa()) {
-                    toastLog('Not\x20on\x20the\x20user\x20ranking\x20page,\x20quit.');
+                toastLog(_0x3b12c4(0xe5) + currentPackage());
+                currentPackage() !== _0x1a7c7f && (toastLog(_0x3b12c4(0xd9)), app[_0x3b12c4(0xc6)](_0x152786), sleep(0xbb8), toastLog('current\x20package:\x20' + currentPackage()));
+                if (!_0x1e0ff0()) {
+                    toastLog(_0x3b12c4(0xdc));
                     return;
                 }
-                _0x29aa56(_0x27d25, _0x453896) ? toastLog(_0x1bd984(0x140)) : toastLog('One\x20or\x20more\x20iterations\x20failed.');
+                _0x105fec(_0x29b9e8, _0x3e22ea) ? toastLog(_0x3b12c4(0xeb)) : toastLog('One\x20or\x20more\x20iterations\x20failed.');
                 return;
-                toastLog('进入首页,\x20点击我的');
+                toastLog(_0x3b12c4(0xea));
                 while (!click('我的'));
-                toastLog(_0x1bd984(0x14b)), sleep(0x1388), toastLog(_0x1bd984(0x149));
-                if (_0x3f7b3f(text(_0x1bd984(0x122))))
-                    toastLog(_0x1bd984(0x124));
+                toastLog(_0x3b12c4(0xe3)), sleep(0x1388), toastLog('点击笔记达人中心');
+                if (_0x30537b(text(_0x3b12c4(0xed))))
+                    toastLog(_0x3b12c4(0xe2));
                 else
-                    toastLog('未找到笔记达人中心按钮');
+                    toastLog(_0x3b12c4(0xbd));
                 sleep(0x1388), toastLog('点击抽百元套餐');
-                if (_0x3f7b3f(text(_0x1bd984(0x13e))))
-                    toastLog('成功点击抽百元套餐');
+                if (_0x30537b(text('抽百元套餐')))
+                    toastLog(_0x3b12c4(0xda));
                 else
-                    toastLog(_0x1bd984(0x141));
-                sleep(0x1388), toastLog(_0x1bd984(0x123));
-                if (_0x3f7b3f(text('去获得')))
-                    toastLog('成功点击去获得');
+                    toastLog('未找到抽百元套餐按钮');
+                sleep(0x1388), toastLog('点击去获得');
+                if (_0x30537b(text('去获得')))
+                    toastLog(_0x3b12c4(0xe6));
                 else
-                    toastLog('未找到去获得按钮');
-                sleep(0x1388), toastLog(_0x1bd984(0x161));
-                if (_0x3f7b3f(text(_0x1bd984(0x15f))))
-                    toastLog(_0x1bd984(0x12b));
+                    toastLog(_0x3b12c4(0xb6));
+                sleep(0x1388), toastLog(_0x3b12c4(0xcd));
+                if (_0x30537b(text('查看排名')))
+                    toastLog('成功点击查看排名');
                 else
-                    toastLog(_0x1bd984(0x14e));
-                sleep(0x1388), toastLog('滑动屏幕'), _0x2a40a7(0x1f4, 0x3e8, 0x1f4, 0x0, 0x3e8, 0x1388, 0x1), sleep(0x1388);
-            } catch (_0xfc66e5) {
-                toastLog(_0x1bd984(0x12a)[_0x1bd984(0x135)](_0xfc66e5[_0x1bd984(0x160)]));
+                    toastLog(_0x3b12c4(0xc3));
+                sleep(0x1388), toastLog(_0x3b12c4(0xc5)), _0x5d71bf(0x1f4, 0x3e8, 0x1f4, 0x0, 0x3e8, 0x1388, 0x1), sleep(0x1388);
+            } catch (_0x1a46fd) {
+                toastLog(_0x3b12c4(0xf3) + _0x1a46fd[_0x3b12c4(0xd0)]);
             }
         }
-        auto[_0x1487f6(0x158)](), main();
+        auto[_0x145328(0xc9)](), main();
     }
 }));

@@ -3,188 +3,200 @@
 本软件可以免费使用，但是不允许二次开发、以及销售，如需获得最的更多apk 请联系作者。
 开源库地址：https://github.com/kkevsekk1/webpack-autojs
 **/
-(function (_0x449996) {
-    var _0xe4ed3c = {};
-    function _0x27e632(_0x47cb31) {
-        var _0x12679b = a0_0x4792;
-        if (_0xe4ed3c[_0x47cb31])
-            return _0xe4ed3c[_0x47cb31][_0x12679b(0xb2)];
-        var _0x6f0507 = _0xe4ed3c[_0x47cb31] = {
-            'i': _0x47cb31,
+function a0_0x5099(_0x2d0d3e, _0x4a0a21) {
+    const _0x50999f = a0_0x4a0a();
+    return a0_0x5099 = function (_0x2aa19b, _0x238f71) {
+        _0x2aa19b = _0x2aa19b - 0x18b;
+        let _0x14c8d4 = _0x50999f[_0x2aa19b];
+        return _0x14c8d4;
+    }, a0_0x5099(_0x2d0d3e, _0x4a0a21);
+}
+function a0_0x4a0a() {
+    const _0x1f9b19 = [
+        'Error:\x20',
+        'call',
+        'current\x20package:\x20',
+        'text',
+        '输入被取消',
+        'com.dianping.v1',
+        '麥克牛',
+        '\x22\x20is\x20on\x20the\x20exclusion\x20list.\x20Skipping.',
+        'Module',
+        '\x20scrolls\x20remaining\x20before\x20stopping.',
+        'waitFor',
+        'random',
+        'start\x20the\x20app',
+        'height',
+        './work/dianping-cancel-follows/cancel_follows.js',
+        'undefined',
+        '大众点评',
+        'Username\x20not\x20found\x20for\x20the\x20detected\x20button.',
+        '__esModule',
+        'exports',
+        'floor',
+        'includes',
+        '已关注',
+        'rawInput',
+        'Scrolled\x20up.\x20',
+        'toStringTag',
+        '艾小评',
+        'findOne',
+        'log',
+        'create',
+        'width',
+        'Not\x20on\x20the\x20desired\x20page\x20(',
+        'android.widget.TextView',
+        'Finished\x20processing\x20\x27已关注\x27\x20buttons\x20across\x20the\x20scrolled\x20screens.',
+        '请输入下滑次数:',
+        'default',
+        '计划滚动次数:\x20',
+        '输入无效',
+        'boundsInside',
+        '尘世中的小吃货',
+        'launch\x20the\x20app',
+        'defineProperty',
+        'object',
+        'bounds',
+        'bind',
+        'exists',
+        'Detected\x20user:\x20',
+        'launchApp',
+        'centerY'
+    ];
+    a0_0x4a0a = function () {
+        return _0x1f9b19;
+    };
+    return a0_0x4a0a();
+}
+(function (_0x4ed9ee) {
+    const _0x113c04 = a0_0x5099;
+    var _0x5335ba = {};
+    function _0x3a682f(_0x4edea3) {
+        const _0x1ebe13 = a0_0x5099;
+        if (_0x5335ba[_0x4edea3])
+            return _0x5335ba[_0x4edea3][_0x1ebe13(0x19e)];
+        var _0x42dad1 = _0x5335ba[_0x4edea3] = {
+            'i': _0x4edea3,
             'l': ![],
             'exports': {}
         };
-        return _0x449996[_0x47cb31][_0x12679b(0x99)](_0x6f0507[_0x12679b(0xb2)], _0x6f0507, _0x6f0507[_0x12679b(0xb2)], _0x27e632), _0x6f0507['l'] = !![], _0x6f0507['exports'];
+        return _0x4ed9ee[_0x4edea3][_0x1ebe13(0x18c)](_0x42dad1['exports'], _0x42dad1, _0x42dad1[_0x1ebe13(0x19e)], _0x3a682f), _0x42dad1['l'] = !![], _0x42dad1[_0x1ebe13(0x19e)];
     }
-    return _0x27e632['m'] = _0x449996, _0x27e632['c'] = _0xe4ed3c, _0x27e632['d'] = function (_0x507bb8, _0x34e5bc, _0x2d0cd6) {
-        !_0x27e632['o'](_0x507bb8, _0x34e5bc) && Object['defineProperty'](_0x507bb8, _0x34e5bc, {
+    return _0x3a682f['m'] = _0x4ed9ee, _0x3a682f['c'] = _0x5335ba, _0x3a682f['d'] = function (_0x1e08ea, _0x92964d, _0x39018b) {
+        const _0x45bdee = a0_0x5099;
+        !_0x3a682f['o'](_0x1e08ea, _0x92964d) && Object[_0x45bdee(0x1b4)](_0x1e08ea, _0x92964d, {
             'enumerable': !![],
-            'get': _0x2d0cd6
+            'get': _0x39018b
         });
-    }, _0x27e632['r'] = function (_0x5d80b3) {
-        var _0x1b77e8 = a0_0x4792;
-        typeof Symbol !== 'undefined' && Symbol['toStringTag'] && Object[_0x1b77e8(0xaa)](_0x5d80b3, Symbol['toStringTag'], { 'value': _0x1b77e8(0xae) }), Object['defineProperty'](_0x5d80b3, _0x1b77e8(0xa8), { 'value': !![] });
-    }, _0x27e632['t'] = function (_0x1720b1, _0x55c365) {
-        var _0x2643c7 = a0_0x4792;
-        if (_0x55c365 & 0x1)
-            _0x1720b1 = _0x27e632(_0x1720b1);
-        if (_0x55c365 & 0x8)
-            return _0x1720b1;
-        if (_0x55c365 & 0x4 && typeof _0x1720b1 === 'object' && _0x1720b1 && _0x1720b1['__esModule'])
-            return _0x1720b1;
-        var _0xb7faba = Object[_0x2643c7(0xa9)](null);
-        _0x27e632['r'](_0xb7faba), Object[_0x2643c7(0xaa)](_0xb7faba, _0x2643c7(0x9b), {
+    }, _0x3a682f['r'] = function (_0x3b23ff) {
+        const _0x381707 = a0_0x5099;
+        typeof Symbol !== _0x381707(0x19a) && Symbol['toStringTag'] && Object[_0x381707(0x1b4)](_0x3b23ff, Symbol[_0x381707(0x1a4)], { 'value': _0x381707(0x193) }), Object[_0x381707(0x1b4)](_0x3b23ff, _0x381707(0x19d), { 'value': !![] });
+    }, _0x3a682f['t'] = function (_0x4dee29, _0x536f5c) {
+        const _0xbd8d92 = a0_0x5099;
+        if (_0x536f5c & 0x1)
+            _0x4dee29 = _0x3a682f(_0x4dee29);
+        if (_0x536f5c & 0x8)
+            return _0x4dee29;
+        if (_0x536f5c & 0x4 && typeof _0x4dee29 === _0xbd8d92(0x1b5) && _0x4dee29 && _0x4dee29[_0xbd8d92(0x19d)])
+            return _0x4dee29;
+        var _0x455d47 = Object[_0xbd8d92(0x1a8)](null);
+        _0x3a682f['r'](_0x455d47), Object[_0xbd8d92(0x1b4)](_0x455d47, _0xbd8d92(0x1ae), {
             'enumerable': !![],
-            'value': _0x1720b1
+            'value': _0x4dee29
         });
-        if (_0x55c365 & 0x2 && typeof _0x1720b1 != _0x2643c7(0x9f)) {
-            for (var _0x33789a in _0x1720b1)
-                _0x27e632['d'](_0xb7faba, _0x33789a, function (_0x44b23b) {
-                    return _0x1720b1[_0x44b23b];
-                }[_0x2643c7(0x92)](null, _0x33789a));
+        if (_0x536f5c & 0x2 && typeof _0x4dee29 != 'string') {
+            for (var _0x5ed7f2 in _0x4dee29)
+                _0x3a682f['d'](_0x455d47, _0x5ed7f2, function (_0x13574a) {
+                    return _0x4dee29[_0x13574a];
+                }[_0xbd8d92(0x1b7)](null, _0x5ed7f2));
         }
-        return _0xb7faba;
-    }, _0x27e632['n'] = function (_0x55fcda) {
-        var _0x9a0a42 = a0_0x4792, _0x1cca2e = _0x55fcda && _0x55fcda[_0x9a0a42(0xa8)] ? function _0x10427b() {
-                var _0x5e15e5 = _0x9a0a42;
-                return _0x55fcda[_0x5e15e5(0x9b)];
-            } : function _0x56468f() {
-                return _0x55fcda;
-            };
-        return _0x27e632['d'](_0x1cca2e, 'a', _0x1cca2e), _0x1cca2e;
-    }, _0x27e632['o'] = function (_0x30ac2c, _0x2f9bc5) {
-        var _0x3ac31f = a0_0x4792;
-        return Object[_0x3ac31f(0xb0)]['hasOwnProperty'][_0x3ac31f(0x99)](_0x30ac2c, _0x2f9bc5);
-    }, _0x27e632['p'] = '', _0x27e632(_0x27e632['s'] = './work/dianping-cancel-follows/cancel_follows.js');
+        return _0x455d47;
+    }, _0x3a682f['n'] = function (_0x31075b) {
+        var _0x148068 = _0x31075b && _0x31075b['__esModule'] ? function _0x3aa15d() {
+            const _0x5921ef = a0_0x5099;
+            return _0x31075b[_0x5921ef(0x1ae)];
+        } : function _0x9ca68f() {
+            return _0x31075b;
+        };
+        return _0x3a682f['d'](_0x148068, 'a', _0x148068), _0x148068;
+    }, _0x3a682f['o'] = function (_0x2387b2, _0x33d134) {
+        return Object['prototype']['hasOwnProperty']['call'](_0x2387b2, _0x33d134);
+    }, _0x3a682f['p'] = '', _0x3a682f(_0x3a682f['s'] = _0x113c04(0x199));
 }({
-    './work/dianping-cancel-follows/cancel_follows.js': function (_0xfcf246, _0x2004c2) {
-        function _0x1717e7() {
-            var _0x3549a5 = a0_0x4792;
-            swipe(device[_0x3549a5(0x93)] / 0x2, device[_0x3549a5(0xb7)] * 0.9, device[_0x3549a5(0x93)] / 0x2, device[_0x3549a5(0xb7)] * 0.5, 0x3e8);
+    './work/dianping-cancel-follows/cancel_follows.js': function (_0x2a0997, _0x2825aa, _0x324759) {
+        'use strict';
+        const _0x157fc2 = a0_0x5099;
+        function _0x2d92ad() {
+            const _0x4af605 = a0_0x5099;
+            swipe(device[_0x4af605(0x1a9)] / 0x2, device['height'] * 0.9, device[_0x4af605(0x1a9)] / 0x2, device[_0x4af605(0x198)] * 0.5, 0x3e8);
         }
-        function _0x54d2fc() {
-            var _0x56d489 = a0_0x4792;
-            swipe(device[_0x56d489(0x93)] / 0x2, device[_0x56d489(0xb7)] * 0.3, device[_0x56d489(0x93)] / 0x2, device[_0x56d489(0xb7)] * 0.7, 0x3e8);
+        function _0x545b18() {
+            const _0x468387 = a0_0x5099;
+            swipe(device['width'] / 0x2, device[_0x468387(0x198)] * 0.3, device[_0x468387(0x1a9)] / 0x2, device[_0x468387(0x198)] * 0.7, 0x3e8);
         }
-        function _0x347a23(_0x160872) {
-            var _0x5e98f1 = a0_0x4792, _0x1bc52a = className('android.widget.TextView')[_0x5e98f1(0xb8)](_0x160872), _0x8b7236 = _0x1bc52a[_0x5e98f1(0x90)]();
-            return _0x8b7236;
+        function _0x1598e8(_0x58301f) {
+            const _0x3fb250 = a0_0x5099, _0x123382 = className(_0x3fb250(0x1ab))[_0x3fb250(0x18e)](_0x58301f), _0x574aae = _0x123382[_0x3fb250(0x1b8)]();
+            return _0x574aae;
         }
         function main() {
-            var _0x12a2c5 = a0_0x4792, _0x501162 = _0x12a2c5(0xb5), _0x263537 = _0x12a2c5(0x95), _0x2bea01 = [
-                    _0x12a2c5(0x94),
-                    _0x12a2c5(0xb4),
-                    _0x12a2c5(0xaf)
+            const _0x485c01 = a0_0x5099, _0x1f3172 = _0x485c01(0x190), _0x351103 = _0x485c01(0x19b), _0x49fa73 = [
+                    '点小胖',
+                    _0x485c01(0x1a5),
+                    _0x485c01(0x191)
                 ];
-            toastLog(_0x12a2c5(0xa4));
-            var _0x3d1bb9 = dialogs[_0x12a2c5(0xa5)](_0x12a2c5(0x97));
-            if (!_0x3d1bb9) {
-                toastLog('输入被取消');
+            toastLog(_0x485c01(0x197));
+            const _0x69e71a = dialogs[_0x485c01(0x1a2)](_0x485c01(0x1ad));
+            if (!_0x69e71a) {
+                toastLog(_0x485c01(0x18f));
                 return;
             } else
-                toastLog(_0x12a2c5(0xb3)[_0x12a2c5(0x98)](_0x3d1bb9));
-            var _0x1df5d0 = parseInt(_0x3d1bb9);
-            if (isNaN(_0x1df5d0)) {
-                toastLog(_0x12a2c5(0xa0));
+                toastLog(_0x485c01(0x1af) + _0x69e71a);
+            const _0x48fb6d = parseInt(_0x69e71a);
+            if (isNaN(_0x48fb6d)) {
+                toastLog(_0x485c01(0x1b0));
                 return;
             }
-            toastLog(_0x12a2c5(0xac)['concat'](currentPackage()));
-            currentPackage() !== _0x501162 && (toastLog(_0x12a2c5(0x91)), app[_0x12a2c5(0xab)](_0x263537), sleep(0xbb8), toastLog('current\x20package:\x20'[_0x12a2c5(0x98)](currentPackage())));
+            toastLog(_0x485c01(0x18d) + currentPackage());
+            currentPackage() !== _0x1f3172 && (toastLog(_0x485c01(0x1b3)), app[_0x485c01(0x1ba)](_0x351103), sleep(0xbb8), toastLog(_0x485c01(0x18d) + currentPackage()));
             try {
-                var _0xdbfa2c = function _0x2594ac() {
-                        var _0x310b63 = _0x12a2c5, _0x54e3fa;
-                        do {
-                            _0x54e3fa = className(_0x310b63(0xa7))[_0x310b63(0xb8)](_0x310b63(0xa1))['boundsInside'](0x0, device['height'] * 0.33, device[_0x310b63(0x93)], device[_0x310b63(0xb7)] * 0.9)[_0x310b63(0x8f)](0x1388);
-                            if (_0x54e3fa) {
-                                usernameTextView = _0x54e3fa['parent']()[_0x310b63(0x9a)]()['findOne'](className('android.widget.TextView'));
-                                if (usernameTextView) {
-                                    var _0x108a13 = usernameTextView[_0x310b63(0xb8)]();
-                                    console['log']('Detected\x20user:\x20'[_0x310b63(0x98)](_0x108a13));
-                                    if (_0x2bea01[_0x310b63(0xa3)](_0x108a13)) {
-                                        console['log']('\x22'[_0x310b63(0x98)](_0x108a13, '\x22\x20is\x20on\x20the\x20exclusion\x20list.\x20Skipping.'));
-                                        return;
-                                    }
-                                    click(_0x54e3fa['bounds']()['centerX'](), _0x54e3fa['bounds']()[_0x310b63(0xa6)]()), sleep(0x3e8), click('确认'), console[_0x310b63(0xb6)]('User\x20unfollowed.'), sleep(Math[_0x310b63(0xa2)](Math[_0x310b63(0x96)]() * 0x7d0) + 0x7d0);
-                                } else {
-                                    console[_0x310b63(0xb6)](_0x310b63(0x9d));
-                                    return;
-                                }
-                            } else
-                                break;
-                        } while (_0x54e3fa);
-                    }, _0x2f3547 = _0x12a2c5(0xb1);
-                if (!_0x347a23(_0x2f3547)) {
-                    toastLog(_0x12a2c5(0xad)['concat'](_0x2f3547, ')'));
+                const _0x2ccd19 = _0x485c01(0x1b2);
+                if (!_0x1598e8(_0x2ccd19)) {
+                    toastLog(_0x485c01(0x1aa) + _0x2ccd19 + ')');
                     return;
                 }
-                var _0x2f7c66 = 0x0;
-                while (_0x2f7c66 < _0x1df5d0) {
-                    _0xdbfa2c(), !className('android.widget.TextView')[_0x12a2c5(0xb8)]('已关注')[_0x12a2c5(0x90)]() ? _0x2f7c66++ : _0x2f7c66 = 0x0, _0x2f7c66 < _0x1df5d0 && (_0x1717e7(), console['log']('Scrolled\x20up.\x20'['concat'](_0x1df5d0 - _0x2f7c66, '\x20scrolls\x20remaining\x20before\x20stopping.')));
+                let _0x440400 = 0x0;
+                function _0x4e89fe() {
+                    const _0x4c2d92 = _0x485c01;
+                    let _0x3021a0;
+                    do {
+                        _0x3021a0 = className('android.widget.TextView')[_0x4c2d92(0x18e)](_0x4c2d92(0x1a1))[_0x4c2d92(0x1b1)](0x0, device[_0x4c2d92(0x198)] * 0.33, device[_0x4c2d92(0x1a9)], device['height'] * 0.9)[_0x4c2d92(0x1a6)](0x1388);
+                        if (_0x3021a0) {
+                            usernameTextView = _0x3021a0['parent']()['parent']()['findOne'](className(_0x4c2d92(0x1ab)));
+                            if (usernameTextView) {
+                                const _0x2fb1ef = usernameTextView[_0x4c2d92(0x18e)]();
+                                console[_0x4c2d92(0x1a7)](_0x4c2d92(0x1b9) + _0x2fb1ef);
+                                if (_0x49fa73[_0x4c2d92(0x1a0)](_0x2fb1ef)) {
+                                    console[_0x4c2d92(0x1a7)]('\x22' + _0x2fb1ef + _0x4c2d92(0x192));
+                                    return;
+                                }
+                                click(_0x3021a0[_0x4c2d92(0x1b6)]()['centerX'](), _0x3021a0[_0x4c2d92(0x1b6)]()[_0x4c2d92(0x1bb)]()), sleep(0x3e8), click('确认'), console['log']('User\x20unfollowed.'), sleep(Math[_0x4c2d92(0x19f)](Math[_0x4c2d92(0x196)]() * 0x7d0) + 0x7d0);
+                            } else {
+                                console['log'](_0x4c2d92(0x19c));
+                                return;
+                            }
+                        } else
+                            break;
+                    } while (_0x3021a0);
                 }
-                console[_0x12a2c5(0xb6)]('Finished\x20processing\x20\x27已关注\x27\x20buttons\x20across\x20the\x20scrolled\x20screens.');
+                while (_0x440400 < _0x48fb6d) {
+                    _0x4e89fe(), !className('android.widget.TextView')[_0x485c01(0x18e)](_0x485c01(0x1a1))[_0x485c01(0x1b8)]() ? _0x440400++ : _0x440400 = 0x0, _0x440400 < _0x48fb6d && (_0x2d92ad(), console['log'](_0x485c01(0x1a3) + (_0x48fb6d - _0x440400) + _0x485c01(0x194)));
+                }
+                console[_0x485c01(0x1a7)](_0x485c01(0x1ac));
                 return;
-            } catch (_0xeec423) {
-                toastLog(_0x12a2c5(0x9c)[_0x12a2c5(0x98)](_0xeec423[_0x12a2c5(0x9e)]));
+            } catch (_0x1fb984) {
+                toastLog(_0x485c01(0x18b) + _0x1fb984['message']);
             }
         }
-        auto['waitFor'](), main();
+        auto[_0x157fc2(0x195)](), main();
     }
 }));
-function a0_0x4792(_0x43207c, _0x264905) {
-    var _0x479284 = a0_0x2649();
-    return a0_0x4792 = function (_0x3155b8, _0x3b1804) {
-        _0x3155b8 = _0x3155b8 - 0x8f;
-        var _0x29fd8a = _0x479284[_0x3155b8];
-        return _0x29fd8a;
-    }, a0_0x4792(_0x43207c, _0x264905);
-}
-function a0_0x2649() {
-    var _0x388126 = [
-        'findOne',
-        'exists',
-        'launch\x20the\x20app',
-        'bind',
-        'width',
-        '点小胖',
-        '大众点评',
-        'random',
-        '请输入下滑次数:',
-        'concat',
-        'call',
-        'parent',
-        'default',
-        'Error:\x20',
-        'Username\x20not\x20found\x20for\x20the\x20detected\x20button.',
-        'message',
-        'string',
-        '输入无效',
-        '已关注',
-        'floor',
-        'includes',
-        'start\x20the\x20app',
-        'rawInput',
-        'centerY',
-        'android.widget.TextView',
-        '__esModule',
-        'create',
-        'defineProperty',
-        'launchApp',
-        'current\x20package:\x20',
-        'Not\x20on\x20the\x20desired\x20page\x20(',
-        'Module',
-        '麥克牛',
-        'prototype',
-        '尘世中的小吃货',
-        'exports',
-        '计划滚动次数:\x20',
-        '艾小评',
-        'com.dianping.v1',
-        'log',
-        'height',
-        'text'
-    ];
-    a0_0x2649 = function () {
-        return _0x388126;
-    };
-    return a0_0x2649();
-}
