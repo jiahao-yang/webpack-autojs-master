@@ -22,10 +22,16 @@ var projects = [ //项目数组，放的是每一个要编译的项目，
     others: ['./callback.js']
   },
   {
-    id: 8, compile: true, name: "dianping", main: "./main.js"
+    id: 8, compile: false, name: "dianping", main: "./main.js"
   },
   {
-    id: 9, compile: true, name: "dianping-cancel-follows", main: "./cancel_follows.js"
+    id: 9, compile: false, name: "dianping-cancel-follows", main: "./cancel_follows.js"
+  },
+  {
+    id: 10, compile: true, name: "qidian", main: "./watch_video.js"
+  },
+  {
+    id: 11, compile: true, name: "floatView", main: "./main.js"
   },
 
 ]

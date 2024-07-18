@@ -1,9 +1,13 @@
 {
-  "presets": ["@babel/preset-env"],
+  "presets": [
+    ["@babel/preset-env"],
+    ["@babel/preset-react"]
+  ],
   "plugins": [
     ["@babel/plugin-transform-runtime"],
     ["@babel/plugin-transform-modules-commonjs"],
-    ["transform-remove-strict-mode"]
+    ["transform-remove-strict-mode"],
+    ["@babel/plugin-transform-react-jsx"]
   ],
   "ignore": [
   ]

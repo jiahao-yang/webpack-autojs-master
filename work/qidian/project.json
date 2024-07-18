@@ -1,0 +1,13 @@
+{
+    "name": "qidian",
+    "main": "watch_video.js",
+    "ignore": [
+        "build"
+    ],
+    "launchConfig": {
+        "hideLogs": false
+    },
+    "packageName": "com.example.qidian",
+    "versionName": "1.0.0",
+    "versionCode": 0
+}

@@ -1,0 +1,13 @@
+{
+    "name": "floatView",
+    "main": "main.js",
+    "ignore": [
+        "build"
+    ],
+    "launchConfig": {
+        "hideLogs": false
+    },
+    "packageName": "com.example.floatView",
+    "versionName": "1.0.0",
+    "versionCode": 0
+}
