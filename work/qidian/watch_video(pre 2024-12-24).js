@@ -1,5 +1,7 @@
 'use strict';
 
+// This program worked before QianDian app was upgraded to a new version on 24Dec2024.
+
 /**
  * 点击UI元素的边界中心
  * @param {object} ui - 要查找的UI元素
@@ -52,15 +54,15 @@ function watchVideoOnce() {
     clickUiBounds(skipAd);
     sleep(2000);
 
-    // 9. 查找“知道了”
-    const iKnow = text('知道了').findOnce();
+    // 9. 查找“我知道了”
+    const iKnow = text('我知道了').findOnce();
     if (!iKnow) {
-        toastLog('未找到“知道了”，退出程序');
+        toastLog('未找到“我知道了”，退出程序');
         return;
     }
 
-    // 10. 点击“知道了”的中心位置
-    toastLog('点击“知道了”的中心位置');
+    // 10. 点击“我知道了”的中心位置
+    toastLog('点击“我知道了”的中心位置');
     clickUiBounds(iKnow);
 }
 
@@ -89,7 +91,6 @@ function watchAllVideosInExactMode() {
  */
 function main() {
     // 1. 脚本开始提示用户输入“看视频次数”
-    /** 
     const videoCount = dialogs.input('请输入看视频次数:');
 
     const count = parseInt(videoCount, 10);
@@ -97,15 +98,12 @@ function main() {
         toastLog('输入的不是有效的数字，请重新运行脚本。');
         return;
     }
-    */
 
     // 2. 检查并启动app“起点”
-    const TARGET_PACKAGE = "com.excean.maid";
-    const APP_NAME = "多开分身";
+    const TARGET_PACKAGE = "com.qidian.QDReader";
+    const APP_NAME = "起点读书";
     // Display current package name
     toastLog(`current package: ${currentPackage()}`);
-    // Display currnet app name
-    toastLog(`current app: ${app.getAppName(currentPackage())}`);
 
     if (currentPackage() !== TARGET_PACKAGE) {
         // 显示“launch the app”
@@ -121,25 +119,14 @@ function main() {
         toastLog(`current package: ${currentPackage()}`);
     } // otherwise, do nothing
 
-    // Sleep to wait for app to load
-    sleep(1000);
-
-    // Click "起点读书" button
-    toastLog("Click '起点读书' button");
-    click("起点读书");
-
-    // Sleep to wait for app to load
-    sleep(1000);
-
-    // 3. 查找TextView“看视频得奖励”，判断是否在“看视频得奖励”的页面
-    const isTargetPage = text('看视频得奖励').findOnce();
-    if (!isTargetPage) {
-        toastLog('未找到“看视频得奖励”页面，退出程序');
+    // 3. 查找TextView“福利中心”，判断是否在“福利中心”的页面
+    const welfareCenter = text('福利中心').findOnce();
+    if (!welfareCenter) {
+        toastLog('未找到“福利中心”页面，退出程序');
         return;
     }
 
     // 重复执行看视频流程，从点击“看视频领福利”开始
-    /*
     for (let i = 0; i < count; i++) {
         // 4. 查找“看视频领福利”，找到就点击按钮
         // Print log to console, showing this is the x time to watch video
@@ -155,12 +142,11 @@ function main() {
         // 现在等待“跳过广告”出现，开始看视频流程
         watchVideoOnce();
     }
-    */
 
-    // 下面继续进行另一种看视频模式，直到所有“看视频”选项都被遍历
+    // 14. 下面继续进行另一种看视频模式，直到所有“看视频”选项都被遍历
     watchAllVideosInExactMode();
 
-    // 成功完成所有操作
+    // 19. 成功完成所有操作
     toastLog('成功完成所有操作');
 }
 

@@ -99,6 +99,7 @@ function main() {
     }
     */
 
+    /*
     // 2. 检查并启动app“起点”
     const TARGET_PACKAGE = "com.excean.maid";
     const APP_NAME = "多开分身";
@@ -121,15 +122,16 @@ function main() {
         toastLog(`current package: ${currentPackage()}`);
     } // otherwise, do nothing
 
-    // Sleep to wait for app to load
-    sleep(1000);
-
     // Click "起点读书" button
     toastLog("Click '起点读书' button");
     click("起点读书");
 
-    // Sleep to wait for app to load
-    sleep(1000);
+    */
+
+    // 2. bounds(948,305,1044,401), 点击bounds中心位置（关闭弹窗）
+    click(996, 353);
+    return;
+
 
     // 3. 查找TextView“看视频得奖励”，判断是否在“看视频得奖励”的页面
     const isTargetPage = text('看视频得奖励').findOnce();
