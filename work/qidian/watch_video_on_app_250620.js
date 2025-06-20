@@ -62,14 +62,14 @@ function handleSkipAd() {
     // 等待观看视频的时长. Show countdown in the console
     while (counter > 0) {
         toastLog(counter);
-        sleep(1000);
+        sleep(1000); // 注意: sleep() 函数在 Node.js 或浏览器环境中不可用，需使用 setTimeout 或其他异步延迟方法。
         counter--;
     }
 
     // 点击“跳过广告”
     toastLog('点击“跳过广告”');
     clickUiBounds(skipAd);
-    sleep(SKIP_AD_WAIT_TIME);
+    sleep(2000);
 
     return true;
 }
@@ -81,10 +81,10 @@ function handleSkipAd() {
 function handleWatchVideoReward() {
     toastLog('开始执行“观看xx秒后即可获得奖励”逻辑');
     // 等待5秒让页面加载
-    sleep(PAGE_LOAD_WAIT_TIME);
+    sleep(5000);
 
     // 直接等待18到20秒（随机，防侦察）
-    const randomWaitTime = Math.floor(Math.random() * (WATCH_VIDEO_REWARD_WAIT_TIME_MAX - WATCH_VIDEO_REWARD_WAIT_TIME_MIN + 1)) + WATCH_VIDEO_REWARD_WAIT_TIME_MIN;
+    const randomWaitTime = Math.floor(Math.random() * 3) + 18; // 18到20秒
     toastLog(`随机等待时间：${randomWaitTime}秒`);
     // countdown
     for (let i = randomWaitTime; i > 0; i--) {
@@ -107,7 +107,7 @@ function watchVideoOnce() {
     toastLog('开始执行看视频流程');
 
     // Sleep to wait for video to load
-    sleep(VIDEO_LOAD_WAIT_TIME);
+    sleep(3000);
 
     // 处理“跳过广告”逻辑
     if (!handleSkipAd()) {
@@ -163,10 +163,3 @@ function main() {
 
 auto.waitFor();
 main();
-
-// 定义常量
-const SKIP_AD_WAIT_TIME = 2000; // 跳过广告后的等待时间
-const WATCH_VIDEO_REWARD_WAIT_TIME_MIN = 18; // 观看视频奖励的最小等待时间
-const WATCH_VIDEO_REWARD_WAIT_TIME_MAX = 20; // 观看视频奖励的最大等待时间
-const VIDEO_LOAD_WAIT_TIME = 3000; // 视频加载的等待时间
-const PAGE_LOAD_WAIT_TIME = 5000; // 页面加载的等待时间
