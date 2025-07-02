@@ -1,5 +1,13 @@
 'use strict';
 
+// 定义常量
+const SKIP_AD_WAIT_TIME = 2000; // 跳过广告后的等待时间
+const WATCH_VIDEO_REWARD_WAIT_TIME_MIN = 25; // 观看视频奖励的最小等待时间
+const WATCH_VIDEO_REWARD_WAIT_TIME_MAX = 28; // 观看视频奖励的最大等待时间
+const VIDEO_LOAD_WAIT_TIME = 3000; // 视频加载的等待时间
+const PAGE_LOAD_WAIT_TIME = 5000; // 页面加载的等待时间
+const WATCH_VIDEO_DEFAULT_DURATION = 25; // 新增的常量变量，用于设置默认观看视频时长
+
 /**
  * 点击UI元素的边界中心
  * @param {object} ui - 要查找的UI元素
@@ -50,12 +58,12 @@ function handleSkipAd() {
     toastLog('找到“跳过广告”， 开始执行“跳过广告”逻辑');
 
     // 动态获取观看视频的时长。方法：查找text“观看视频xx秒”，然后提取xx秒作为时长
-    let counter = 15;
+    let counter = WATCH_VIDEO_DEFAULT_DURATION;
     const watchVideo = textContains("观看视频").findOnce();
     if (watchVideo) {
         counter = parseInt(watchVideo.text().match(/\d+/)[0], 10) + 1; // add 1 seconds for buffer
     } else {
-        toastLog('未找到“观看视频xx秒”，使用默认值15秒');
+        toastLog(`未找到“观看视频xx秒”，使用默认值${WATCH_VIDEO_DEFAULT_DURATION}秒`);
     }
     toastLog(`倒计时：${counter}秒`);
 
@@ -163,10 +171,3 @@ function main() {
 
 auto.waitFor();
 main();
-
-// 定义常量
-const SKIP_AD_WAIT_TIME = 2000; // 跳过广告后的等待时间
-const WATCH_VIDEO_REWARD_WAIT_TIME_MIN = 18; // 观看视频奖励的最小等待时间
-const WATCH_VIDEO_REWARD_WAIT_TIME_MAX = 20; // 观看视频奖励的最大等待时间
-const VIDEO_LOAD_WAIT_TIME = 3000; // 视频加载的等待时间
-const PAGE_LOAD_WAIT_TIME = 5000; // 页面加载的等待时间
