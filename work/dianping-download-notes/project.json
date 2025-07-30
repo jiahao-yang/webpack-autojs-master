@@ -1,0 +1,13 @@
+{
+    "name": "dianping-download-notes",
+    "main": "download_notes.js",
+    "ignore": [
+        "build"
+    ],
+    "launchConfig": {
+        "hideLogs": false
+    },
+    "packageName": "com.example.dianping-download-notes",
+    "versionName": "1.0.0",
+    "versionCode": 0
+} 
