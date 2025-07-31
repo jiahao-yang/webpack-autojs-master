@@ -6,6 +6,13 @@
  * 
  * This script downloads self-created restaurant notes/reviews from Dianping app
  * 此脚本用于从大众点评应用下载自创的餐厅笔记/评价
+ * 
+ * Features:
+ * - Page verification and navigation
+ * - Image capture and saving
+ * - Note data extraction
+ * - File system operations
+ * - HTTP requests for data backup
  */
 
 // Constants
@@ -13,6 +20,41 @@ const TARGET_PACKAGE = "com.dianping.v1";
 const APP_NAME = "大众点评";
 const USER_NICKNAME = "尘世中的小吃货"; // User nickname from the image
 const NOTES_TAB_TEXT = "笔记"; // Notes tab text
+
+// Configuration
+const CONFIG = {
+    maxNotesToDownload: 1, // Test with just one note
+    baseDownloadDir: "/storage/emulated/0/Download/dianping_notes/",
+    imagesSubDir: "images/",
+    markdownSubDir: "markdown/",
+    stateFile: "download_state.json",
+    metadataFile: "downloaded_notes.json",
+    appImagesDir: "/storage/emulated/0/Pictures/", // Default app image location
+    navigationDelay: 2000,
+    imageDownloadDelay: 2000,
+    scrollDelay: 1500,
+    detectNewNotes: true,
+    downloadNewNotes: true,
+    maxNewNotesPerSession: 5,
+    notifyOnGrowth: true,
+    maxSessionDuration: 30, // minutes
+    maxNotesPerSession: 20,
+    autoResume: true
+};
+
+// State management
+const STATE = {
+    lastDownloadedNote: 0,
+    totalNotesProcessed: 0,
+    downloadStartTime: null,
+    lastDownloadedTimestamp: null,
+    knownNoteTitles: [],
+    totalNotesAtStart: 0,
+    currentTotalNotes: 0,
+    newNotesDetected: 0,
+    sessionStartTime: null,
+    sessionId: null
+};
 
 /**
  * Checks whether the application is currently displaying the user's profile page
@@ -53,11 +95,695 @@ function isOnUserProfilePage() {
 }
 
 /**
+ * Creates necessary directories for downloads
+ * 创建下载所需的目录
+ */
+function createDownloadDirectories() {
+    try {
+        // Create main download directory
+        files.ensureDir(CONFIG.baseDownloadDir);
+        toastLog(`Created download directory: ${CONFIG.baseDownloadDir}`);
+        
+        // Create markdown subdirectory
+        const markdownDir = files.join(CONFIG.baseDownloadDir, CONFIG.markdownSubDir);
+        files.ensureDir(markdownDir);
+        toastLog(`Created markdown directory: ${markdownDir}`);
+        
+        // Create images subdirectory
+        const imagesDir = files.join(CONFIG.baseDownloadDir, CONFIG.imagesSubDir);
+        files.ensureDir(imagesDir);
+        toastLog(`Created images directory: ${imagesDir}`);
+        
+        return true;
+    } catch (error) {
+        toastLog(`Error creating directories: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Loads downloaded notes metadata from file
+ * 从文件加载已下载笔记的元数据
+ * 
+ * @returns {Object} - Metadata object
+ */
+function loadDownloadedNotes() {
+    try {
+        const metadataPath = files.join(CONFIG.baseDownloadDir, CONFIG.metadataFile);
+        if (files.exists(metadataPath)) {
+            const content = files.read(metadataPath, "utf-8");
+            return JSON.parse(content);
+        }
+    } catch (error) {
+        toastLog(`Error loading metadata: ${error.message}`);
+    }
+    return { notes: [], lastUpdated: null, totalDownloaded: 0 };
+}
+
+/**
+ * Saves downloaded notes metadata to file
+ * 保存已下载笔记的元数据到文件
+ * 
+ * @param {Object} metadata - Metadata object to save
+ */
+function saveDownloadedNotes(metadata) {
+    try {
+        const metadataPath = files.join(CONFIG.baseDownloadDir, CONFIG.metadataFile);
+        metadata.lastUpdated = new Date().toISOString();
+        files.write(metadataPath, JSON.stringify(metadata, null, 2), "utf-8");
+        toastLog("Metadata saved successfully");
+    } catch (error) {
+        toastLog(`Error saving metadata: ${error.message}`);
+    }
+}
+
+/**
+ * Checks if a note is already downloaded by title
+ * 通过标题检查笔记是否已下载
+ * 
+ * @param {string} noteTitle - Note title to check
+ * @returns {boolean} - true if already downloaded
+ */
+function isNoteDownloaded(noteTitle) {
+    const metadata = loadDownloadedNotes();
+    return metadata.notes.some(note => note.title === noteTitle);
+}
+
+/**
+ * Adds a downloaded note to metadata
+ * 将已下载的笔记添加到元数据
+ * 
+ * @param {Object} noteData - Note data to add
+ */
+function addDownloadedNote(noteData) {
+    const metadata = loadDownloadedNotes();
+    metadata.notes.push(noteData);
+    metadata.totalDownloaded = metadata.notes.length;
+    saveDownloadedNotes(metadata);
+}
+
+/**
+ * Navigates to the notes tab
+ * 导航到笔记标签页
+ * 
+ * @returns {boolean} - true if successful
+ */
+function navigateToNotesTab() {
+    try {
+        const notesTab = text(NOTES_TAB_TEXT).findOne(3000);
+        if (!notesTab) {
+            toastLog("Notes tab not found");
+            return false;
+        }
+        
+        // Use position-based clicking
+        click(notesTab.bounds().centerX(), notesTab.bounds().centerY());
+        sleep(CONFIG.navigationDelay);
+        
+        toastLog("Successfully navigated to notes tab");
+        return true;
+    } catch (error) {
+        toastLog(`Error navigating to notes tab: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Extracts note title from current page
+ * 从当前页面提取笔记标题
+ * 
+ * @returns {string|null} - Note title or null if not found
+ */
+function extractNoteTitle() {
+    try {
+        // Look for title in the lower part of the screen (note content area)
+        // The title should be the first prominent text element in the lower part
+        const textElements = className("android.widget.TextView").find();
+        let noteTitle = null;
+        
+        for (let element of textElements) {
+            const text = element.text();
+            const bounds = element.bounds();
+            
+            // Check if element is in the lower part of the screen (below middle)
+            if (bounds.top > device.height * 0.3 && text && text.length > 5 && text.length < 100) {
+                // Skip user nickname and other UI elements
+                if (!text.includes('尘世中的小吃货') && !text.includes('◎') && !text.includes('#')) {
+                    noteTitle = text.trim();
+                    toastLog(`Extracted note title: ${noteTitle}`);
+                    return noteTitle;
+                }
+            }
+        }
+        
+        toastLog("No note title found in lower part of screen");
+        return null;
+    } catch (error) {
+        toastLog(`Error extracting note title: ${error.message}`);
+        return null;
+    }
+}
+
+/**
+ * Clicks on the first image to open gallery
+ * 点击第一张图片打开图库
+ * 
+ * @returns {boolean} - true if successful
+ */
+function clickFirstImage() {
+    try {
+        // Look for elements with desc = 'reculike_main_image'
+        const imageElements = desc("reculike_main_image").find();
+        if (imageElements.length > 0) {
+            const firstImage = imageElements[0];
+            // Use position-based clicking like in cancel_follows.js
+            click(firstImage.bounds().centerX(), firstImage.bounds().centerY());
+            sleep(CONFIG.imageDownloadDelay);
+            toastLog("Clicked on first image using position-based click");
+            return true;
+        }
+        
+        // Fallback: try to find image elements with different selectors
+        const fallbackElements = className("android.widget.ImageView").find();
+        if (fallbackElements.length > 0) {
+            const firstElement = fallbackElements[0];
+            click(firstElement.bounds().centerX(), firstElement.bounds().centerY());
+            sleep(CONFIG.imageDownloadDelay);
+            toastLog("Clicked on first image using fallback method");
+            return true;
+        }
+        
+        toastLog("No image elements found to click");
+        return false;
+    } catch (error) {
+        toastLog(`Error clicking first image: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Clicks on the image in note page to open gallery
+ * 在笔记页面点击图片打开图库
+ * 
+ * @returns {boolean} - true if successful
+ */
+function clickNoteImage() {
+    try {
+        // Use fixed bounds for note page image clicking
+        // This should work for every note page
+        const imageBounds = [0, 254, 1080, 1694];
+        const centerX = (imageBounds[0] + imageBounds[2]) / 2;
+        const centerY = (imageBounds[1] + imageBounds[3]) / 2;
+        
+        click(centerX, centerY);
+        sleep(CONFIG.imageDownloadDelay);
+        toastLog("Clicked on note image using fixed bounds");
+        return true;
+        
+    } catch (error) {
+        toastLog(`Error clicking note image: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Clicks on the first note to navigate to note page
+ * 点击第一个笔记导航到笔记页面
+ * 
+ * @returns {boolean} - true if successful
+ */
+function clickFirstNote() {
+    try {
+        // Look for clickable note elements on home page
+        const noteElements = desc("reculike_main_image").find();
+        if (noteElements.length > 0) {
+            const firstNote = noteElements[0];
+            click(firstNote.bounds().centerX(), firstNote.bounds().centerY());
+            sleep(CONFIG.navigationDelay);
+            toastLog("Clicked on first note to navigate to note page");
+            return true;
+        }
+        
+        // Fallback: try to find any clickable area
+        const clickableElements = className("android.widget.ImageView").find();
+        if (clickableElements.length > 0) {
+            const firstElement = clickableElements[0];
+            click(firstElement.bounds().centerX(), firstElement.bounds().centerY());
+            sleep(CONFIG.navigationDelay);
+            toastLog("Clicked on first note using fallback method");
+            return true;
+        }
+        
+        toastLog("No note elements found to click");
+        return false;
+    } catch (error) {
+        toastLog(`Error clicking first note: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Finds and clicks the menu button in gallery
+ * 在图库中查找并点击菜单按钮
+ * 
+ * @returns {boolean} - true if successful
+ */
+function findAndClickMenuButton() {
+    try {
+        // Strategy 1: Try multiple text patterns for menu button with specific bounds
+        const menuTextPatterns = ["...", "⋮", "⋯", "更多", "菜单"];
+        for (let pattern of menuTextPatterns) {
+            const menuButton = text(pattern).findOne(1000);
+            if (menuButton) {
+                toastLog(`Found menu button with text: ${pattern}`);
+                click(menuButton.bounds().centerX(), menuButton.bounds().centerY());
+                sleep(1000);
+                return true;
+            }
+        }
+        
+        // Strategy 2: Try specific bounds for "..." element only (not "<" to avoid back action)
+        // "..." bounds: (924,146,1044,266)
+        const threeDotsBounds = [924, 146, 1044, 266];
+        const threeDotsCenterX = (threeDotsBounds[0] + threeDotsBounds[2]) / 2;
+        const threeDotsCenterY = (threeDotsBounds[1] + threeDotsBounds[3]) / 2;
+        
+        // Note: "<" bounds (30,146,150,266) are for future back() functionality, not menu detection
+        // const backButtonBounds = [30, 146, 150, 266];
+        
+        // Try clicking "..." (menu button, not back button)
+        toastLog("Trying to click '...' at specific bounds");
+        click(threeDotsCenterX, threeDotsCenterY);
+        sleep(1000);
+        
+        // Check if menu options appeared
+        const saveOption = text("保存图片").findOne(2000);
+        if (saveOption) {
+            toastLog("Menu appeared after clicking '...' at specific bounds");
+            return true;
+        }
+        
+        // Strategy 3: Look for ImageView elements in top-right area (fallback)
+        const imageViewElements = className("android.widget.ImageView").find();
+        if (imageViewElements.length > 0) {
+            const screenWidth = device.width;
+            const screenHeight = device.height;
+            
+            for (let element of imageViewElements) {
+                const bounds = element.bounds();
+                const centerX = bounds.centerX();
+                const centerY = bounds.centerY();
+                
+                // Check if it's in the top-right area (likely a menu button, not back button)
+                if (centerX > screenWidth * 0.7 && centerY < screenHeight * 0.2) {
+                    toastLog("Found menu button as ImageView in top-right area");
+                    click(centerX, centerY);
+                    sleep(1000);
+                    return true;
+                }
+            }
+        }
+        
+        // Strategy 4: Try clicking in top-right corner as last resort
+        const screenWidth = device.width;
+        const screenHeight = device.height;
+        const topRightX = screenWidth * 0.9;
+        const topRightY = screenHeight * 0.1;
+        
+        toastLog("Trying to click in top-right corner as last resort");
+        click(topRightX, topRightY);
+        sleep(1000);
+        
+        // Check if menu options appeared
+        const saveOption2 = text("保存图片").findOne(2000);
+        if (saveOption2) {
+            toastLog("Menu appeared after clicking top-right corner");
+            return true;
+        }
+        
+        toastLog("Menu button not found with any strategy");
+        return false;
+        
+    } catch (error) {
+        toastLog(`Error finding menu button: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Downloads the current image in gallery
+ * 下载图库中的当前图片
+ * 
+ * @param {number} noteIndex - Note index for naming
+ * @param {number} imageNumber - Image number in sequence
+ * @returns {string|null} - Image filename or null if failed
+ */
+function downloadCurrentImage(noteIndex, imageNumber) {
+    try {
+        // Find and click the menu button using multiple strategies
+        if (!findAndClickMenuButton()) {
+            toastLog("Failed to find and click menu button");
+            return null;
+        }
+        
+        // Click "保存图片" using position-based clicking
+        const saveOption = text("保存图片").findOne(3000);
+        if (!saveOption) {
+            toastLog("Save option not found");
+            return null;
+        }
+        click(saveOption.bounds().centerX(), saveOption.bounds().centerY());
+        sleep(2000);
+        
+        // Wait for "保存成功" message
+        const successMessage = text("保存成功").findOne(5000);
+        if (!successMessage) {
+            toastLog("Save success message not found");
+            return null;
+        }
+        
+        const imageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(imageNumber).padStart(3, '0')}.png`;
+        toastLog(`Image ${imageNumber} downloaded successfully: ${imageName}`);
+        return imageName;
+        
+    } catch (error) {
+        toastLog(`Error downloading image ${imageNumber}: ${error.message}`);
+        return null;
+    }
+}
+
+/**
+ * Swipes to next image in gallery
+ * 在图库中滑动到下一张图片
+ * 
+ * @returns {boolean} - true if successful
+ */
+function swipeToNextImage() {
+    try {
+        // Swipe left to go to next image
+        swipe(device.width * 0.8, device.height * 0.5, device.width * 0.2, device.height * 0.5, 500);
+        sleep(1000);
+        toastLog("Swiped to next image");
+        return true;
+    } catch (error) {
+        toastLog(`Error swiping to next image: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Downloads all images from current note
+ * 下载当前笔记的所有图片
+ * 
+ * @param {number} noteIndex - Note index for naming
+ * @returns {Object} - Object with imageCount and imagePaths
+ */
+function downloadNoteImages(noteIndex) {
+    let imageCount = 0;
+    const imagePaths = [];
+    
+    toastLog(`Starting image download for note ${noteIndex}`);
+    
+    // Gallery is already open from previous clickNoteImage() call
+    // No need to call clickNoteImage() again
+    
+    // Process each image in gallery
+    while (true) {
+        // Check if we're still in gallery
+        const imageCounter = textMatches(/^\d+\s*\/\s*\d+$/).findOne(2000);
+        if (!imageCounter) {
+            toastLog("No image counter found, exiting gallery");
+            break;
+        }
+        
+        const counterText = imageCounter.text();
+        const [currentImage, totalImages] = counterText.split('/').map(Number);
+        
+        toastLog(`Processing image ${currentImage}/${totalImages}`);
+        
+        // Download current image
+        const imagePath = downloadCurrentImage(noteIndex, currentImage);
+        if (imagePath) {
+            imagePaths.push(imagePath);
+            imageCount++;
+        }
+        
+        // Move to next image or exit
+        if (currentImage < totalImages) {
+            if (!swipeToNextImage()) {
+                toastLog("Failed to swipe to next image");
+                break;
+            }
+            sleep(CONFIG.imageDownloadDelay);
+        } else {
+            toastLog("Reached last image");
+            break;
+        }
+    }
+    
+    // Exit gallery
+    back();
+    sleep(CONFIG.navigationDelay);
+    
+    toastLog(`Downloaded ${imageCount} images for note ${noteIndex}`);
+    return { imageCount, imagePaths };
+}
+
+/**
+ * Moves images from app directory to organized structure
+ * 将图片从应用目录移动到有组织的结构中
+ * 
+ * @param {number} noteIndex - Note index for naming
+ * @param {number} imageCount - Number of images to move
+ * @returns {Array} - Array of moved image objects
+ */
+function moveImagesFromAppDirectory(noteIndex, imageCount) {
+    const imagesDir = files.join(CONFIG.baseDownloadDir, CONFIG.imagesSubDir);
+    files.ensureDir(imagesDir);
+    const movedImages = [];
+    
+    try {
+        // Get list of files in Pictures directory
+        const pictureFiles = files.listDir(CONFIG.appImagesDir);
+        const recentImages = pictureFiles
+            .filter(file => file.endsWith('.jpg') || file.endsWith('.png'))
+            .sort((a, b) => {
+                const aTime = files.lastModified(files.join(CONFIG.appImagesDir, a));
+                const bTime = files.lastModified(files.join(CONFIG.appImagesDir, b));
+                return bTime - aTime; // Most recent first
+            })
+            .slice(0, imageCount); // Get the most recent images
+        
+        toastLog(`Found ${recentImages.length} recent images to move`);
+        
+        // Move images to organized structure with filename mapping
+        for (let i = 0; i < recentImages.length; i++) {
+            const sourcePath = files.join(CONFIG.appImagesDir, recentImages[i]);
+            const newImageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(i + 1).padStart(3, '0')}.png`;
+            const destPath = files.join(imagesDir, newImageName);
+            
+            try {
+                files.move(sourcePath, destPath);
+                movedImages.push({
+                    originalName: recentImages[i],
+                    newName: newImageName,
+                    path: destPath,
+                    relativePath: `images/${newImageName}`
+                });
+                toastLog(`Moved image: ${recentImages[i]} → ${newImageName}`);
+            } catch (error) {
+                toastLog(`Error moving image ${recentImages[i]}: ${error.message}`);
+            }
+        }
+        
+    } catch (error) {
+        toastLog(`Error accessing Pictures directory: ${error.message}`);
+    }
+    
+    return movedImages;
+}
+
+/**
+ * Extracts note content text
+ * 提取笔记内容文本
+ * 
+ * @returns {string} - Note content
+ */
+function extractNoteContent() {
+    try {
+        const textElements = className("android.widget.TextView").find();
+        let content = "";
+        
+        for (let element of textElements) {
+            const text = element.text();
+            if (text && text.length > 10 && !text.includes('◎') && !text.includes('#')) {
+                content += text + "\n";
+            }
+        }
+        
+        return content.trim() || "No content extracted";
+    } catch (error) {
+        toastLog(`Error extracting note content: ${error.message}`);
+        return "Error extracting content";
+    }
+}
+
+/**
+ * Extracts view count from note
+ * 从笔记中提取浏览量
+ * 
+ * @returns {string} - View count
+ */
+function extractViewCount() {
+    try {
+        const viewElement = textMatches(/◎浏览\d+/).findOne(2000);
+        if (viewElement) {
+            const match = viewElement.text().match(/◎浏览(\d+)/);
+            return match ? match[1] : "0";
+        }
+        return "0";
+    } catch (error) {
+        toastLog(`Error extracting view count: ${error.message}`);
+        return "0";
+    }
+}
+
+/**
+ * Generates a content hash for duplicate detection
+ * 生成内容哈希用于重复检测
+ * 
+ * @param {string} content - Content to hash
+ * @returns {string} - Content hash
+ */
+function generateContentHash(content) {
+    // Simple hash function for content
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+        const char = content.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString(16);
+}
+
+/**
+ * Generates a markdown file for a note on mobile device
+ * 在移动设备上为笔记生成markdown文件
+ * 
+ * @param {Object} noteData - Note data
+ * @returns {string} - Path to generated markdown file
+ */
+function generateMarkdownOnMobile(noteData) {
+    try {
+        const markdownContent = `# ${noteData.title}
+
+**Date:** ${noteData.timestamp}  
+**Views:** ${noteData.viewCount}  
+**Restaurant:** ${noteData.restaurantName || 'Unknown'}  
+
+## Images
+
+${noteData.images.map((img, i) => `![Image ${i+1}](${img.relativePath})`).join('\n')}
+
+## Content
+
+${noteData.content}
+
+---
+
+*Downloaded by Dianping Notes Downloader v1.0*
+`;
+
+        // Ensure markdown directory exists
+        const markdownDir = files.join(CONFIG.baseDownloadDir, CONFIG.markdownSubDir);
+        files.ensureDir(markdownDir);
+        
+        // Generate filename with timestamp
+        const filename = `note_${String(noteData.noteIndex).padStart(3, '0')}_${Date.now()}.md`;
+        const filepath = files.join(markdownDir, filename);
+        
+        // Create file with directories
+        files.createWithDirs(filepath);
+        
+        // Write content to the file
+        files.write(filepath, markdownContent, "utf-8");
+        
+        toastLog(`Markdown file generated: ${filepath}`);
+        return filepath;
+        
+    } catch (error) {
+        toastLog(`Error generating markdown file: ${error.message}`);
+        return null;
+    }
+}
+
+/**
+ * Processes a single note (downloads images, extracts content, generates markdown)
+ * 处理单个笔记（下载图片、提取内容、生成markdown）
+ * 
+ * @param {number} noteIndex - Note index
+ * @returns {boolean} - true if successful
+ */
+function processNote(noteIndex) {
+    toastLog(`Processing note ${noteIndex}`);
+    
+    // Extract note title first
+    const noteTitle = extractNoteTitle();
+    if (!noteTitle) {
+        toastLog("Could not extract note title, skipping");
+        return false;
+    }
+    
+    // Check if already downloaded
+    if (isNoteDownloaded(noteTitle)) {
+        toastLog(`Note already downloaded: ${noteTitle}`);
+        return false;
+    }
+    
+    // Download images
+    const { imageCount, imagePaths } = downloadNoteImages(noteIndex);
+    
+    // Move images to organized structure
+    const movedImages = moveImagesFromAppDirectory(noteIndex, imageCount);
+    
+    // Extract text content
+    const noteContent = extractNoteContent();
+    
+    // Extract view count
+    const viewCount = extractViewCount();
+    
+    // Generate markdown
+    const noteData = {
+        title: noteTitle,
+        timestamp: new Date().toISOString(),
+        viewCount: viewCount,
+        restaurantName: "Unknown", // Will be enhanced later
+        imageCount: imageCount,
+        markdownFile: `note_${String(noteIndex).padStart(3, '0')}_${Date.now()}.md`,
+        imagePrefix: `note_${String(noteIndex).padStart(3, '0')}`,
+        contentHash: generateContentHash(noteContent),
+        downloadDate: new Date().toISOString(),
+        images: movedImages,
+        content: noteContent,
+        noteIndex: noteIndex
+    };
+    
+    const markdownPath = generateMarkdownOnMobile(noteData);
+    
+    // Update metadata
+    addDownloadedNote(noteData);
+    
+    toastLog(`Successfully processed note: ${noteTitle}`);
+    return true;
+}
+
+/**
  * Main function
  * 主函数
  */
 function main() {
     toastLog("Starting Dianping Notes Downloader");
+    toastLog("开始大众点评笔记下载器");
     
     // Display current package name
     toastLog(`Current package: ${currentPackage()}`);
@@ -84,14 +810,81 @@ function main() {
         toastLog("✅ Successfully verified we're on the desired page!");
         toastLog("✅ 成功验证我们在目标页面上！");
         
-        // TODO: Next steps will include:
-        // 1. Click on "笔记" tab to navigate to notes section
-        // 2. Scroll through notes to find all user-created content
-        // 3. Extract note data (title, content, images, location, etc.)
-        // 4. Save/download the notes data
+        // Create download directories
+        if (!createDownloadDirectories()) {
+            toastLog("❌ Failed to create download directories");
+            return;
+        }
         
-        toastLog("Page verification completed. Ready for next development phase.");
-        toastLog("页面验证完成。准备进入下一开发阶段。");
+        // Navigate to notes tab
+        if (!navigateToNotesTab()) {
+            toastLog("❌ Failed to navigate to notes tab");
+            return;
+        }
+        
+        toastLog("Ready to test note navigation and image clicking...");
+        toastLog("准备测试笔记导航和图片点击...");
+        
+        // Step 1: Click on first note to navigate to note page
+        const noteClickSuccess = clickFirstNote();
+        if (!noteClickSuccess) {
+            toastLog("❌ Failed to click on first note");
+            return;
+        }
+        
+        toastLog("✅ Successfully navigated to note page!");
+        
+        // Step 2: Extract note title from note page
+        const noteTitle = extractNoteTitle();
+        if (!noteTitle) {
+            toastLog("❌ Failed to extract note title");
+            return;
+        }
+        
+        toastLog(`✅ Successfully extracted note title: ${noteTitle}`);
+        
+        // Step 3: Click on image in note page to open gallery
+        const imageClickSuccess = clickNoteImage();
+        
+        if (imageClickSuccess) {
+            toastLog("✅ Successfully clicked on note image!");
+            toastLog("✅ 成功点击笔记图片！");
+            
+            // Step 4: Download images with pagination
+            toastLog("Starting image download process...");
+            const imageResult = downloadNoteImages(1); // Using note index 1 for testing
+            
+            if (imageResult && imageResult.imageCount > 0) {
+                toastLog(`✅ Successfully downloaded ${imageResult.imageCount} images!`);
+                toastLog(`✅ 成功下载 ${imageResult.imageCount} 张图片！`);
+                
+                // Step 5: Move images from app directory to organized structure
+                toastLog("Moving images to organized structure...");
+                const movedImages = moveImagesFromAppDirectory(1, imageResult.imageCount);
+                
+                if (movedImages && movedImages.length > 0) {
+                    toastLog(`✅ Successfully moved ${movedImages.length} images to organized structure!`);
+                    toastLog(`✅ 成功移动 ${movedImages.length} 张图片到有组织的结构中！`);
+                    
+                    // Log the moved images for verification
+                    movedImages.forEach((image, index) => {
+                        toastLog(`Image ${index + 1}: ${image.originalName} → ${image.newName}`);
+                    });
+                } else {
+                    toastLog("❌ Failed to move images to organized structure");
+                    toastLog("❌ 移动图片到有组织的结构失败");
+                }
+            } else {
+                toastLog("❌ Failed to download images");
+                toastLog("❌ 下载图片失败");
+            }
+            
+            toastLog("Step 6 test completed. Exiting for now.");
+            toastLog("步骤6测试完成。现在退出。");
+        } else {
+            toastLog("❌ Failed to click on note image");
+            toastLog("❌ 点击笔记图片失败");
+        }
         
     } catch (error) {
         toastLog(`Error: ${error.message}`);
@@ -101,4 +894,4 @@ function main() {
 
 // Entry point
 auto.waitFor();
-main(); 
+main();
