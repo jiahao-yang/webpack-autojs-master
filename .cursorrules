@@ -1,0 +1,49 @@
+
+# Code Commit Message Rules
+
+## When to Generate Commit Messages
+**Auto-generate** commit messages for:
+- ✅ Feature additions and removals
+- ✅ Bug fixes and improvements  
+- ✅ Refactoring and optimizations
+- ✅ Configuration changes
+- ✅ API changes and database modifications
+
+**Skip** commit message generation for:
+- ⏭️ Trivial changes (typos, minor formatting)
+- ⏭️ Question-only conversations
+- ⏭️ Pure information requests
+- ⏭️ Single-line fixes
+
+## Commit Message Format
+- **Language**: English only
+- **Length**: Maximum 5 lines
+- **Style**: Conventional commits with emoji
+- **Structure**: 
+  ```
+  ✨ Clear summary of main change
+  
+  - Specific improvement 1
+  - Specific improvement 2  
+  - Specific improvement 3
+  ```
+
+## Emoji Convention
+- ✨ New features
+- 🐛 Bug fixes
+- 🚀 Performance improvements
+- 📝 Documentation
+- 🎨 UI/UX improvements
+- 🔧 Configuration changes
+- ♻️ Refactoring
+- 🗑️ Removing code/features
+
+## Examples
+```
+✨ Add user authentication with JWT tokens
+
+- Implement login/logout endpoints
+- Add password hashing with bcrypt
+- Create protected route middleware
+- Add user session management
+```

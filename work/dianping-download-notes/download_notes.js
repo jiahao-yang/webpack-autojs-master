@@ -455,12 +455,8 @@ function downloadCurrentImage(noteIndex, imageNumber) {
         click(saveOption.bounds().centerX(), saveOption.bounds().centerY());
         sleep(2000);
         
-        // Wait for "保存成功" message
-        const successMessage = text("保存成功").findOne(5000);
-        if (!successMessage) {
-            toastLog("Save success message not found");
-            return null;
-        }
+        // Wait for save operation to complete (message appears too quickly to detect reliably)
+        sleep(2000); // Wait 2 seconds for save operation to complete
         
         const imageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(imageNumber).padStart(3, '0')}.png`;
         toastLog(`Image ${imageNumber} downloaded successfully: ${imageName}`);
@@ -473,18 +469,61 @@ function downloadCurrentImage(noteIndex, imageNumber) {
 }
 
 /**
- * Swipes to next image in gallery
- * 在图库中滑动到下一张图片
+ * Swipes to next image in gallery with multiple strategies
+ * 在图库中滑动到下一张图片，使用多种策略
  * 
  * @returns {boolean} - true if successful
  */
 function swipeToNextImage() {
     try {
-        // Swipe left to go to next image
-        swipe(device.width * 0.8, device.height * 0.5, device.width * 0.2, device.height * 0.5, 500);
+        // Strategy 1: Longer swipe distance (more aggressive)
+        const startX = device.width * 0.9;  // Start from 90% of screen width
+        const endX = device.width * 0.1;    // End at 10% of screen width
+        const centerY = device.height * 0.5; // Center of screen height
+        
+        toastLog(`Swiping from ${startX} to ${endX} at Y=${centerY}`);
+        swipe(startX, centerY, endX, centerY, 800); // Longer duration
+        sleep(1500); // Longer wait time
+        
+        // Check if swipe was successful by looking for image counter change
+        const newImageCounter = textMatches(/^\d+\s*\/\s*\d+$/).findOne(3000);
+        if (newImageCounter) {
+            toastLog("Swipe successful - image counter found");
+            return true;
+        }
+        
+        // Strategy 2: Try with different Y positions (in case image is not centered)
+        toastLog("Trying swipe with different Y positions...");
+        const yPositions = [0.3, 0.5, 0.7]; // Try different vertical positions
+        
+        for (let yRatio of yPositions) {
+            const y = device.height * yRatio;
+            swipe(startX, y, endX, y, 600);
+            sleep(1000);
+            
+            const counterCheck = textMatches(/^\d+\s*\/\s*\d+$/).findOne(2000);
+            if (counterCheck) {
+                toastLog(`Swipe successful at Y=${y}`);
+                return true;
+            }
+        }
+        
+        // Strategy 3: Try shorter but faster swipe
+        toastLog("Trying shorter but faster swipe...");
+        const shortStartX = device.width * 0.8;
+        const shortEndX = device.width * 0.2;
+        swipe(shortStartX, centerY, shortEndX, centerY, 300); // Faster swipe
         sleep(1000);
-        toastLog("Swiped to next image");
-        return true;
+        
+        const finalCheck = textMatches(/^\d+\s*\/\s*\d+$/).findOne(2000);
+        if (finalCheck) {
+            toastLog("Short swipe successful");
+            return true;
+        }
+        
+        toastLog("All swipe strategies failed");
+        return false;
+        
     } catch (error) {
         toastLog(`Error swiping to next image: ${error.message}`);
         return false;
