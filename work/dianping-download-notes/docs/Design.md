@@ -981,12 +981,17 @@ generateMarkdownOnMobile(noteData):
 ```
 PSEUDO CODE:
 metadataManagement():
-  - Save note title to downloaded_notes.json
-  - Track download progress and timestamps
-  - Check for duplicates before processing
+  - Load existing metadata from downloaded_notes.json
+  - Display metadata statistics (total notes, images, last updated)
+  - Check for duplicates by note title before processing
+  - Save note data with title, timestamp, viewCount, restaurantName
+  - Track image files with original and new names
+  - Generate markdown files and track paths
+  - Update metadata after each successful note download
   - Resume from last successful position
   - Handle user input for max notes to download
 ```
+**Status**: ✅ Implemented with comprehensive metadata tracking
 
 ### 18.2 Error Handling Strategy (错误处理策略)
 

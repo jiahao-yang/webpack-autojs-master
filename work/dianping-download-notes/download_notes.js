@@ -204,6 +204,31 @@ function addDownloadedNote(noteData) {
 }
 
 /**
+ * Displays metadata statistics
+ * 显示元数据统计信息
+ */
+function displayMetadataStats() {
+    const metadata = loadDownloadedNotes();
+    const totalNotes = metadata.notes.length;
+    const totalImages = metadata.notes.reduce((sum, note) => sum + (note.imageCount || 0), 0);
+    
+    toastLog("📊 Metadata Statistics:");
+    toastLog(`📊 元数据统计:`);
+    toastLog(`   Total notes: ${totalNotes}`);
+    toastLog(`   笔记总数: ${totalNotes}`);
+    toastLog(`   Total images: ${totalImages}`);
+    toastLog(`   图片总数: ${totalImages}`);
+    toastLog(`   Last updated: ${metadata.lastUpdated || 'Never'}`);
+    toastLog(`   最后更新: ${metadata.lastUpdated || '从未'}`);
+    
+    if (totalNotes > 0) {
+        const latestNote = metadata.notes[metadata.notes.length - 1];
+        toastLog(`   Latest note: ${latestNote.title}`);
+        toastLog(`   最新笔记: ${latestNote.title}`);
+    }
+}
+
+/**
  * Navigates to the notes tab
  * 导航到笔记标签页
  * 
@@ -905,8 +930,20 @@ function main() {
             return;
         }
         
-        toastLog("Ready to test note navigation and image clicking...");
-        toastLog("准备测试笔记导航和图片点击...");
+        // Load existing metadata to check for duplicates
+        const existingMetadata = loadDownloadedNotes();
+        toastLog(`Found ${existingMetadata.notes.length} previously downloaded notes`);
+        toastLog(`发现 ${existingMetadata.notes.length} 个之前下载的笔记`);
+        
+        // Display metadata statistics
+        displayMetadataStats();
+        
+        // Process notes with metadata tracking
+        let processedCount = 0;
+        const maxNotesToProcess = CONFIG.maxNotesToDownload;
+        
+        toastLog(`Ready to process up to ${maxNotesToProcess} notes...`);
+        toastLog(`准备处理最多 ${maxNotesToProcess} 个笔记...`);
         
         // Step 1: Click on first note to navigate to note page
         const noteClickSuccess = clickFirstNote();
@@ -926,6 +963,13 @@ function main() {
         
         toastLog(`✅ Successfully extracted note title: ${noteTitle}`);
         
+        // Check if note is already downloaded
+        if (isNoteDownloaded(noteTitle)) {
+            toastLog(`⚠️ Note already downloaded: ${noteTitle}`);
+            toastLog(`⚠️ 笔记已下载: ${noteTitle}`);
+            return;
+        }
+        
         // Step 3: Click on image in note page to open gallery
         const imageClickSuccess = clickNoteImage();
         
@@ -935,7 +979,7 @@ function main() {
             
             // Step 4: Download images with pagination
             toastLog("Starting image download process...");
-            const imageResult = downloadNoteImages(1); // Using note index 1 for testing
+            const imageResult = downloadNoteImages(processedCount + 1); // Use processed count + 1 for note index
             
             if (imageResult && imageResult.imageCount > 0) {
                 toastLog(`✅ Successfully downloaded ${imageResult.imageCount} images!`);
@@ -943,11 +987,47 @@ function main() {
                 
                 // Step 5: Move images from app directory to organized structure
                 toastLog("Moving images to organized structure...");
-                const movedImages = moveImagesFromAppDirectory(1, imageResult.imageCount);
+                const movedImages = moveImagesFromAppDirectory(processedCount + 1, imageResult.imageCount);
                 
                 if (movedImages && movedImages.length > 0) {
                     toastLog(`✅ Successfully moved ${movedImages.length} images to organized structure!`);
                     toastLog(`✅ 成功移动 ${movedImages.length} 张图片到有组织的结构中！`);
+                    
+                    // Step 6: Extract additional note data
+                    const noteContent = extractNoteContent();
+                    const viewCount = extractViewCount();
+                    
+                    // Step 7: Create note data object for metadata
+                    const noteData = {
+                        title: noteTitle,
+                        timestamp: new Date().toISOString(),
+                        viewCount: viewCount,
+                        restaurantName: "Unknown", // Will be enhanced later
+                        imageCount: imageResult.imageCount,
+                        markdownFile: `note_${String(processedCount + 1).padStart(3, '0')}_${Date.now()}.md`,
+                        imagePrefix: `note_${String(processedCount + 1).padStart(3, '0')}`,
+                        contentHash: generateContentHash(noteContent),
+                        downloadDate: new Date().toISOString(),
+                        images: movedImages,
+                        content: noteContent,
+                        noteIndex: processedCount + 1
+                    };
+                    
+                    // Step 8: Generate markdown file
+                    const markdownPath = generateMarkdownOnMobile(noteData);
+                    if (markdownPath) {
+                        noteData.markdownPath = markdownPath;
+                        toastLog(`✅ Generated markdown file: ${markdownPath}`);
+                    }
+                    
+                    // Step 9: Update metadata
+                    addDownloadedNote(noteData);
+                    processedCount++;
+                    
+                    toastLog(`✅ Successfully processed note: ${noteTitle}`);
+                    toastLog(`✅ 成功处理笔记: ${noteTitle}`);
+                    toastLog(`📊 Total notes processed: ${processedCount}/${maxNotesToProcess}`);
+                    toastLog(`📊 已处理笔记总数: ${processedCount}/${maxNotesToProcess}`);
                     
                     // Log the moved images for verification
                     movedImages.forEach((image, index) => {
@@ -962,8 +1042,8 @@ function main() {
                 toastLog("❌ 下载图片失败");
             }
             
-            toastLog("Step 6 test completed. Exiting for now.");
-            toastLog("步骤6测试完成。现在退出。");
+            toastLog("Metadata implementation completed. Exiting for now.");
+            toastLog("元数据实施完成。现在退出。");
         } else {
             toastLog("❌ Failed to click on note image");
             toastLog("❌ 点击笔记图片失败");
