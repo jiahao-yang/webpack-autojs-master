@@ -625,21 +625,44 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
     try {
         // Get list of files in Pictures directory
         const pictureFiles = files.listDir(CONFIG.appImagesDir);
-        const recentImages = pictureFiles
-            .filter(file => file.endsWith('.jpg') || file.endsWith('.png'))
+        const imageFiles = pictureFiles.filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
+        
+        // Sort by filename (newer files typically have later timestamps in filename)
+        // Files have format like promphoto_1754016938841.png (timestamp in milliseconds)
+        const recentImages = imageFiles
             .sort((a, b) => {
-                const aTime = files.lastModified(files.join(CONFIG.appImagesDir, a));
-                const bTime = files.lastModified(files.join(CONFIG.appImagesDir, b));
-                return bTime - aTime; // Most recent first
+                // Extract timestamp from filename if possible
+                // Look for pattern: promphoto_XXXXXXXXXXXX.png where X is digits
+                const aMatch = a.match(/promphoto_(\d+)\.png/);
+                const bMatch = b.match(/promphoto_(\d+)\.png/);
+                
+                if (aMatch && bMatch) {
+                    // Both have timestamps, compare them numerically (larger number = newer)
+                    const aTime = parseInt(aMatch[1]);
+                    const bTime = parseInt(bMatch[1]);
+                    return bTime - aTime; // Descending order (newest first)
+                } else if (aMatch) {
+                    // Only a has timestamp, put it first
+                    return -1;
+                } else if (bMatch) {
+                    // Only b has timestamp, put it first
+                    return 1;
+                } else {
+                    // Neither has timestamp, sort alphabetically (newer files often come later)
+                    return b.localeCompare(a);
+                }
             })
             .slice(0, imageCount); // Get the most recent images
         
         toastLog(`Found ${recentImages.length} recent images to move`);
         
         // Move images to organized structure with filename mapping
+        // Reverse the numbering so newest file (last in gallery) becomes image_001
         for (let i = 0; i < recentImages.length; i++) {
             const sourcePath = files.join(CONFIG.appImagesDir, recentImages[i]);
-            const newImageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(i + 1).padStart(3, '0')}.png`;
+            // Reverse the numbering: newest file (i=0) should be image_001, oldest file should be image_N
+            const imageNumber = recentImages.length - i;
+            const newImageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(imageNumber).padStart(3, '0')}.png`;
             const destPath = files.join(imagesDir, newImageName);
             
             try {
