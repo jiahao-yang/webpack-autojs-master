@@ -1,4 +1,12 @@
 
+# Update Design.md timely
+
+- After any major updates or important code changes, always update the `Design.md` file as soon as possible.
+- Document new features, architectural changes, and important implementation details in `Design.md` for future reference and team knowledge sharing.
+- Include rationale (理由/reasoning) for significant decisions and any relevant diagrams or code snippets if helpful.
+- Regularly review `Design.md` to ensure it accurately reflects the current system design and major workflows.
+
+
 # Code Commit Message Rules
 
 ## When to Generate Commit Messages

@@ -39,7 +39,13 @@ const CONFIG = {
     notifyOnGrowth: true,
     maxSessionDuration: 30, // minutes
     maxNotesPerSession: 20,
-    autoResume: true
+    autoResume: true,
+    // Dynamic sleep configuration to avoid automation detection
+    minSleepTime: 1500,  // Minimum sleep time in milliseconds
+    maxSleepTime: 4000,  // Maximum sleep time in milliseconds
+    saveOperationDelay: 3000, // Delay for save operations
+    swipeDelay: 2000,    // Delay after swipe operations
+    menuClickDelay: 1500  // Delay after menu clicks
 };
 
 // State management
@@ -55,6 +61,21 @@ const STATE = {
     sessionStartTime: null,
     sessionId: null
 };
+
+/**
+ * Generates a random sleep time to avoid automation detection
+ * 生成随机睡眠时间以避免自动化检测
+ * 
+ * @param {number} minTime - Minimum sleep time in milliseconds
+ * @param {number} maxTime - Maximum sleep time in milliseconds
+ * @returns {number} - Random sleep time in milliseconds
+ */
+function dynamicSleep(minTime = CONFIG.minSleepTime, maxTime = CONFIG.maxSleepTime) {
+    const sleepTime = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+    toastLog(`Sleeping for ${sleepTime}ms (dynamic)`);
+    sleep(sleepTime);
+    return sleepTime;
+}
 
 /**
  * Checks whether the application is currently displaying the user's profile page
@@ -198,7 +219,7 @@ function navigateToNotesTab() {
         
         // Use position-based clicking
         click(notesTab.bounds().centerX(), notesTab.bounds().centerY());
-        sleep(CONFIG.navigationDelay);
+        dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
         
         toastLog("Successfully navigated to notes tab");
         return true;
@@ -258,7 +279,7 @@ function clickFirstImage() {
             const firstImage = imageElements[0];
             // Use position-based clicking like in cancel_follows.js
             click(firstImage.bounds().centerX(), firstImage.bounds().centerY());
-            sleep(CONFIG.imageDownloadDelay);
+            dynamicSleep(CONFIG.imageDownloadDelay, CONFIG.imageDownloadDelay + 1000);
             toastLog("Clicked on first image using position-based click");
             return true;
         }
@@ -268,7 +289,7 @@ function clickFirstImage() {
         if (fallbackElements.length > 0) {
             const firstElement = fallbackElements[0];
             click(firstElement.bounds().centerX(), firstElement.bounds().centerY());
-            sleep(CONFIG.imageDownloadDelay);
+            dynamicSleep(CONFIG.imageDownloadDelay, CONFIG.imageDownloadDelay + 1000);
             toastLog("Clicked on first image using fallback method");
             return true;
         }
@@ -296,7 +317,7 @@ function clickNoteImage() {
         const centerY = (imageBounds[1] + imageBounds[3]) / 2;
         
         click(centerX, centerY);
-        sleep(CONFIG.imageDownloadDelay);
+        dynamicSleep(CONFIG.imageDownloadDelay, CONFIG.imageDownloadDelay + 1000);
         toastLog("Clicked on note image using fixed bounds");
         return true;
         
@@ -319,7 +340,7 @@ function clickFirstNote() {
         if (noteElements.length > 0) {
             const firstNote = noteElements[0];
             click(firstNote.bounds().centerX(), firstNote.bounds().centerY());
-            sleep(CONFIG.navigationDelay);
+            dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
             toastLog("Clicked on first note to navigate to note page");
             return true;
         }
@@ -329,7 +350,7 @@ function clickFirstNote() {
         if (clickableElements.length > 0) {
             const firstElement = clickableElements[0];
             click(firstElement.bounds().centerX(), firstElement.bounds().centerY());
-            sleep(CONFIG.navigationDelay);
+            dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
             toastLog("Clicked on first note using fallback method");
             return true;
         }
@@ -357,7 +378,7 @@ function findAndClickMenuButton() {
             if (menuButton) {
                 toastLog(`Found menu button with text: ${pattern}`);
                 click(menuButton.bounds().centerX(), menuButton.bounds().centerY());
-                sleep(1000);
+                dynamicSleep(CONFIG.menuClickDelay, CONFIG.menuClickDelay + 1000);
                 return true;
             }
         }
@@ -374,7 +395,7 @@ function findAndClickMenuButton() {
         // Try clicking "..." (menu button, not back button)
         toastLog("Trying to click '...' at specific bounds");
         click(threeDotsCenterX, threeDotsCenterY);
-        sleep(1000);
+        dynamicSleep(CONFIG.menuClickDelay, CONFIG.menuClickDelay + 1000);
         
         // Check if menu options appeared
         const saveOption = text("保存图片").findOne(2000);
@@ -398,7 +419,7 @@ function findAndClickMenuButton() {
                 if (centerX > screenWidth * 0.7 && centerY < screenHeight * 0.2) {
                     toastLog("Found menu button as ImageView in top-right area");
                     click(centerX, centerY);
-                    sleep(1000);
+                    dynamicSleep(CONFIG.menuClickDelay, CONFIG.menuClickDelay + 1000);
                     return true;
                 }
             }
@@ -412,7 +433,7 @@ function findAndClickMenuButton() {
         
         toastLog("Trying to click in top-right corner as last resort");
         click(topRightX, topRightY);
-        sleep(1000);
+        dynamicSleep(CONFIG.menuClickDelay, CONFIG.menuClickDelay + 1000);
         
         // Check if menu options appeared
         const saveOption2 = text("保存图片").findOne(2000);
@@ -453,10 +474,10 @@ function downloadCurrentImage(noteIndex, imageNumber) {
             return null;
         }
         click(saveOption.bounds().centerX(), saveOption.bounds().centerY());
-        sleep(2000);
+        dynamicSleep(CONFIG.saveOperationDelay, CONFIG.saveOperationDelay + 2000);
         
         // Wait for save operation to complete (message appears too quickly to detect reliably)
-        sleep(2000); // Wait 2 seconds for save operation to complete
+        dynamicSleep(CONFIG.saveOperationDelay, CONFIG.saveOperationDelay + 1000); // Additional wait for save operation
         
         const imageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(imageNumber).padStart(3, '0')}.png`;
         toastLog(`Image ${imageNumber} downloaded successfully: ${imageName}`);
@@ -483,7 +504,7 @@ function swipeToNextImage() {
         
         toastLog(`Swiping from ${startX} to ${endX} at Y=${centerY}`);
         swipe(startX, centerY, endX, centerY, 800); // Longer duration
-        sleep(1500); // Longer wait time
+        dynamicSleep(CONFIG.swipeDelay, CONFIG.swipeDelay + 1000); // Dynamic wait time
         
         // Check if swipe was successful by looking for image counter change
         const newImageCounter = textMatches(/^\d+\s*\/\s*\d+$/).findOne(3000);
@@ -499,7 +520,7 @@ function swipeToNextImage() {
         for (let yRatio of yPositions) {
             const y = device.height * yRatio;
             swipe(startX, y, endX, y, 600);
-            sleep(1000);
+            dynamicSleep(CONFIG.swipeDelay, CONFIG.swipeDelay + 500);
             
             const counterCheck = textMatches(/^\d+\s*\/\s*\d+$/).findOne(2000);
             if (counterCheck) {
@@ -513,7 +534,7 @@ function swipeToNextImage() {
         const shortStartX = device.width * 0.8;
         const shortEndX = device.width * 0.2;
         swipe(shortStartX, centerY, shortEndX, centerY, 300); // Faster swipe
-        sleep(1000);
+        dynamicSleep(CONFIG.swipeDelay, CONFIG.swipeDelay + 500);
         
         const finalCheck = textMatches(/^\d+\s*\/\s*\d+$/).findOne(2000);
         if (finalCheck) {
@@ -573,7 +594,7 @@ function downloadNoteImages(noteIndex) {
                 toastLog("Failed to swipe to next image");
                 break;
             }
-            sleep(CONFIG.imageDownloadDelay);
+            dynamicSleep(CONFIG.imageDownloadDelay, CONFIG.imageDownloadDelay + 1000);
         } else {
             toastLog("Reached last image");
             break;
@@ -582,7 +603,7 @@ function downloadNoteImages(noteIndex) {
     
     // Exit gallery
     back();
-    sleep(CONFIG.navigationDelay);
+    dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
     
     toastLog(`Downloaded ${imageCount} images for note ${noteIndex}`);
     return { imageCount, imagePaths };
@@ -831,13 +852,13 @@ function main() {
     if (currentPackage() !== TARGET_PACKAGE) {
         toastLog("Launching Dianping app");
         app.launchApp(APP_NAME);
-        sleep(3000);
+        dynamicSleep(3000, 5000);
         toastLog(`Current package: ${currentPackage()}`);
     }
     
     try {
         // Wait for app to load
-        sleep(2000);
+        dynamicSleep(2000, 3500);
         
         // Verify we're on the user's profile page
         if (!isOnUserProfilePage()) {
