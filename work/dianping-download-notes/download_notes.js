@@ -747,6 +747,151 @@ function extractNoteContent() {
 }
 
 /**
+ * Extracts note posting date and location
+ * 提取笔记发布日期和位置
+ * 
+ * @returns {Object} - Object with date and location
+ */
+function extractNoteDateAndLocation() {
+    try {
+        // First, scroll down multiple times to ensure date/location elements are visible
+        toastLog("Scrolling to reveal date and location elements...");
+        const screenHeight = device.height;
+        const maxScrollAttempts = 3; // Try up to 3 scrolls
+        let dateFound = false;
+        
+        for (let scrollAttempt = 1; scrollAttempt <= maxScrollAttempts; scrollAttempt++) {
+            toastLog(`Scroll attempt ${scrollAttempt}/${maxScrollAttempts}...`);
+            swipe(device.width / 2, screenHeight * 0.8, device.width / 2, screenHeight * 0.2, 500);
+            dynamicSleep(1000, 2000);
+            
+            // Check if we can find date elements after this scroll
+            const testElements = className("android.widget.TextView").depth(19).find();
+            if (testElements.length > 0) {
+                let hasDatePattern = false;
+                for (let element of testElements) {
+                    const text = element.text();
+                    const mmddMatch = text.match(/^(\d{2})-(\d{2})$/);
+                    const yyyymmddMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (mmddMatch || yyyymmddMatch) {
+                        hasDatePattern = true;
+                        break;
+                    }
+                }
+                if (hasDatePattern) {
+                    toastLog(`✅ Date elements found after scroll attempt ${scrollAttempt}`);
+                    dateFound = true;
+                    break;
+                }
+            }
+            
+            if (scrollAttempt < maxScrollAttempts) {
+                toastLog(`No date found yet, continuing to scroll...`);
+            }
+        }
+        
+        if (!dateFound) {
+            toastLog(`⚠️ No date elements found after ${maxScrollAttempts} scroll attempts`);
+        }
+        
+        // Use depth 19 directly since we confirmed it works
+        let textElements = [];
+        const elementsAtDepth19 = className("android.widget.TextView").depth(19).find();
+        
+        if (elementsAtDepth19.length > 0) {
+            textElements = elementsAtDepth19;
+            toastLog(`Found ${elementsAtDepth19.length} TextView elements at depth 19:`);
+            for (let i = 0; i < elementsAtDepth19.length; i++) {
+                const text = elementsAtDepth19[i].text();
+                toastLog(`  [${i}] "${text}"`);
+            }
+        } else {
+            toastLog("No TextView elements found at depth 19");
+        }
+        
+        if (textElements.length === 0) {
+            // Fallback: try without depth restriction
+            textElements = className("android.widget.TextView").find();
+            toastLog(`Fallback: Found ${textElements.length} TextView elements without depth restriction`);
+        } else {
+            toastLog(`Using depth 19 for date and location extraction`);
+        }
+        
+        // Log all TextView contents for debugging
+        toastLog("=== All TextView contents ===");
+        for (let i = 0; i < textElements.length; i++) {
+            const text = textElements[i].text();
+            toastLog(`[${i}] "${text}"`);
+        }
+        toastLog("=== End TextView contents ===");
+        
+        let dateElement = null;
+        let locationElement = null;
+        
+        // Since we're at depth 19, just look for date and location directly
+        for (let i = 0; i < textElements.length; i++) {
+            const element = textElements[i];
+            const text = element.text();
+            
+            // Look for date pattern (MM-DD or YYYY-MM-DD)
+            if (!dateElement) {
+                const mmddMatch = text.match(/^(\d{2})-(\d{2})$/);
+                const yyyymmddMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                
+                if (mmddMatch || yyyymmddMatch) {
+                    dateElement = element;
+                    toastLog(`[${i}] Found posting date: "${text}"`);
+                    continue;
+                }
+            }
+            
+            // After finding date, the next element is location
+            if (dateElement && !locationElement) {
+                locationElement = element;
+                toastLog(`[${i}] Found posting location: "${text}"`);
+                break;
+            }
+        }
+        
+        let postingDate = null;
+        let location = null;
+        
+        if (dateElement) {
+            const dateText = dateElement.text();
+            const mmddMatch = dateText.match(/^(\d{2})-(\d{2})$/);
+            const yyyymmddMatch = dateText.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            
+            if (mmddMatch) {
+                // MM-DD format, assume current year
+                const currentYear = new Date().getFullYear();
+                const month = mmddMatch[1];
+                const day = mmddMatch[2];
+                postingDate = `${currentYear}${month}${day}`;
+                toastLog(`Extracted date (MM-DD): ${dateText} → ${postingDate}`);
+            } else if (yyyymmddMatch) {
+                // YYYY-MM-DD format
+                const year = yyyymmddMatch[1];
+                const month = yyyymmddMatch[2];
+                const day = yyyymmddMatch[3];
+                postingDate = `${year}${month}${day}`;
+                toastLog(`Extracted date (YYYY-MM-DD): ${dateText} → ${postingDate}`);
+            }
+        }
+        
+        if (locationElement) {
+            location = locationElement.text().trim();
+            toastLog(`Extracted location: ${location}`);
+        }
+        
+        return { postingDate, location };
+        
+    } catch (error) {
+        toastLog(`Error extracting date and location: ${error.message}`);
+        return { postingDate: null, location: null };
+    }
+}
+
+/**
  * Extracts view count from note
  * 从笔记中提取浏览量
  * 
@@ -795,9 +940,11 @@ function generateMarkdownOnMobile(noteData) {
     try {
         const markdownContent = `# ${noteData.title}
 
-**Date:** ${noteData.timestamp}  
+**Posting Date:** ${noteData.postingDate || 'Unknown'}  
+**Location:** ${noteData.location || 'Unknown'}  
 **Views:** ${noteData.viewCount}  
 **Restaurant:** ${noteData.restaurantName || 'Unknown'}  
+**Download Date:** ${noteData.downloadDate}  
 
 ## Images
 
@@ -816,8 +963,8 @@ ${noteData.content}
         const markdownDir = files.join(CONFIG.baseDownloadDir, CONFIG.markdownSubDir);
         files.ensureDir(markdownDir);
         
-        // Generate filename with timestamp
-        const filename = `note_${String(noteData.noteIndex).padStart(3, '0')}_${Date.now()}.md`;
+        // Use the markdown filename from noteData (which includes posting date)
+        const filename = noteData.markdownFile;
         const filepath = files.join(markdownDir, filename);
         
         // Create file with directories
@@ -894,6 +1041,8 @@ function processNote(noteIndex) {
     toastLog(`Successfully processed note: ${noteTitle}`);
     return true;
 }
+
+// Test function removed - functionality integrated into main implementation
 
 /**
  * Main function
@@ -1006,6 +1155,7 @@ function main() {
                     // Step 6: Extract additional note data
                     const noteContent = extractNoteContent();
                     const viewCount = extractViewCount();
+                    const { postingDate, location } = extractNoteDateAndLocation();
                     
                     // Step 7: Create note data object for metadata
                     const noteData = {
@@ -1014,7 +1164,9 @@ function main() {
                         viewCount: viewCount,
                         restaurantName: "Unknown", // Will be enhanced later
                         imageCount: imageResult.imageCount,
-                        markdownFile: `note_${String(processedCount + 1).padStart(3, '0')}_${Date.now()}.md`,
+                        postingDate: postingDate,
+                        location: location,
+                        markdownFile: `note_${postingDate || 'unknown'}_${String(processedCount + 1).padStart(3, '0')}_${Date.now()}.md`,
                         imagePrefix: `note_${String(processedCount + 1).padStart(3, '0')}`,
                         contentHash: generateContentHash(noteContent),
                         downloadDate: new Date().toISOString(),
@@ -1067,4 +1219,5 @@ function main() {
 
 // Entry point
 auto.waitFor();
-main();
+main(); // Switch back to main implementation
+// main(); // Comment out main function for now

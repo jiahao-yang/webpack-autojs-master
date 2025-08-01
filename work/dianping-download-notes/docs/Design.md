@@ -950,6 +950,35 @@ extractNoteContent():
 ```
 **Status**: ✅ Implemented with hashtag marker approach
 
+#### Step 7.5: Extract Note Posting Date and Location
+**Requirement**: Extract posting date and location from note. Date and location are positioned below visible area and require scrolling to access.
+**Implementation**:
+```
+PSEUDO CODE:
+extractNoteDateAndLocation():
+  - Scroll down up to 3 times to reveal date/location elements (y-coord 1645)
+  - After each scroll, check depth 19 for date patterns
+  - Stop scrolling when date elements are found
+  - Use depth 19 directly for date and location extraction
+  - Look for date element with pattern MM-DD or YYYY-MM-DD
+  - Get next element as location
+  - Convert date to YYYYMMDD format for filename
+  - Return postingDate and location
+```
+**Status**: ✅ Implemented and tested with multi-scroll strategy
+
+**Key Findings from Layout Analysis:**
+- Date element "07-07" is at depth 19
+- Element bounds: (48,1645,138,1687) - below visible area
+- Element type: android.widget.TextView
+- Requires scrolling before element detection
+
+**Multi-Scroll Strategy:**
+- **Up to 3 scroll attempts** to handle very long note content
+- **Check after each scroll** if date elements are visible at depth 19
+- **Stop early** when date pattern is found to avoid unnecessary scrolling
+- **Log progress** for debugging and monitoring
+
 #### Step 8: Extract Restaurant Information
 **Requirement**: Capture the name of the restaurant. To do this, click the component with the restaurant name; it will show another page with the full name of the restaurant under "商户详情".
 **Implementation**:
@@ -993,6 +1022,15 @@ metadataManagement():
   - Handle user input for max notes to download
 ```
 **Status**: ✅ Implemented with comprehensive metadata tracking
+
+### 19. Recent Implementation Improvements
+
+#### ✅ Step 7 Completion Summary
+- **Note Content Extraction**: ✅ Implemented with hashtag marker approach
+- **Date and Location Extraction**: ✅ Implemented with multi-scroll strategy
+- **Multi-Scroll Strategy**: ✅ Up to 3 scroll attempts with early termination
+- **Depth 19 Optimization**: ✅ Direct depth targeting for reliable extraction
+- **Date Format Conversion**: ✅ MM-DD/YYYY-MM-DD to YYYYMMDD for filenames
 
 ### 18.2 Error Handling Strategy (错误处理策略)
 
