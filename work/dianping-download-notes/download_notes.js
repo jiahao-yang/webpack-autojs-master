@@ -712,24 +712,34 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
 }
 
 /**
- * Extracts note content text
- * 提取笔记内容文本
+ * Extracts note content text using hashtag marker
+ * 使用话题标签标记提取笔记内容文本
  * 
  * @returns {string} - Note content
  */
 function extractNoteContent() {
     try {
+        // Find TextView that contains the hashtag "#尘世中的小吃货"
         const textElements = className("android.widget.TextView").find();
-        let content = "";
+        let noteContent = null;
         
         for (let element of textElements) {
             const text = element.text();
-            if (text && text.length > 10 && !text.includes('◎') && !text.includes('#')) {
-                content += text + "\n";
+            if (text && text.includes('#尘世中的小吃货')) {
+                noteContent = text;
+                toastLog(`Found note content TextView with hashtag marker`);
+                break;
             }
         }
         
-        return content.trim() || "No content extracted";
+        if (noteContent) {
+            toastLog(`Successfully extracted note content (${noteContent.length} characters)`);
+            return noteContent.trim();
+        } else {
+            toastLog("No note content found with hashtag marker");
+            return "No content extracted";
+        }
+        
     } catch (error) {
         toastLog(`Error extracting note content: ${error.message}`);
         return "Error extracting content";

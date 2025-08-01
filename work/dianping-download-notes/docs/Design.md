@@ -937,17 +937,18 @@ moveImagesFromAppDirectory(noteIndex, imageCount):
 **Status**: ✅ Implemented and tested with successful image organization
 
 #### Step 7: Extract Note Content
-**Requirement**: Capture all the text of the note. We usually need to scroll down the screen to see all the text, depending on how long the note is. The note ends above the restaurant name.
+**Requirement**: Capture all the text of the note. The note content has a fixed pattern: includes a hashtag "#尘世中的小吃货".
 **Implementation**:
 ```
 PSEUDO CODE:
 extractNoteContent():
   - Find all TextView elements
-  - Filter out UI elements (view counts, hashtags, etc.)
-  - Combine text content
-  - Handle scrolling if content is long
-  - Stop at restaurant name boundary
+  - Look for TextView containing "#尘世中的小吃货" hashtag
+  - Extract the complete text from that TextView
+  - No scrolling needed - all content is in one TextView
+  - No boundary checking needed - hashtag marks the content
 ```
+**Status**: ✅ Implemented with hashtag marker approach
 
 #### Step 8: Extract Restaurant Information
 **Requirement**: Capture the name of the restaurant. To do this, click the component with the restaurant name; it will show another page with the full name of the restaurant under "商户详情".
