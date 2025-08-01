@@ -833,17 +833,20 @@ function extractNoteDateAndLocation() {
             const element = textElements[i];
             const text = element.text();
             
-            // Look for date pattern (MM-DD or YYYY-MM-DD)
-            if (!dateElement) {
-                const mmddMatch = text.match(/^(\d{2})-(\d{2})$/);
-                const yyyymmddMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-                
-                if (mmddMatch || yyyymmddMatch) {
-                    dateElement = element;
-                    toastLog(`[${i}] Found posting date: "${text}"`);
-                    continue;
-                }
+                    // Look for date patterns (MM-DD, YYYY-MM-DD, or Chinese relative dates)
+        if (!dateElement) {
+            const mmddMatch = text.match(/^(\d{2})-(\d{2})$/);
+            const yyyymmddMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            const chineseRelativeMatch = text.match(/^(\d+)(小时前|天前|分钟前|星期前)$/);
+            const yesterdayMatch = text.match(/^昨天\s+(\d{2}):(\d{2})$/);
+            const dayBeforeYesterdayMatch = text.match(/^前天\s+(\d{2}):(\d{2})$/);
+            
+            if (mmddMatch || yyyymmddMatch || chineseRelativeMatch || yesterdayMatch || dayBeforeYesterdayMatch) {
+                dateElement = element;
+                toastLog(`[${i}] Found posting date: "${text}"`);
+                continue;
             }
+        }
             
             // After finding date, the next element is location
             if (dateElement && !locationElement) {
@@ -860,6 +863,9 @@ function extractNoteDateAndLocation() {
             const dateText = dateElement.text();
             const mmddMatch = dateText.match(/^(\d{2})-(\d{2})$/);
             const yyyymmddMatch = dateText.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            const chineseRelativeMatch = dateText.match(/^(\d+)(小时前|天前|分钟前|星期前)$/);
+            const yesterdayMatch = dateText.match(/^昨天\s+(\d{2}):(\d{2})$/);
+            const dayBeforeYesterdayMatch = dateText.match(/^前天\s+(\d{2}):(\d{2})$/);
             
             if (mmddMatch) {
                 // MM-DD format, assume current year
@@ -875,6 +881,59 @@ function extractNoteDateAndLocation() {
                 const day = yyyymmddMatch[3];
                 postingDate = `${year}${month}${day}`;
                 toastLog(`Extracted date (YYYY-MM-DD): ${dateText} → ${postingDate}`);
+            } else if (chineseRelativeMatch) {
+                // Chinese relative time format (e.g., "4小时前", "6天前", "7天前")
+                const amount = parseInt(chineseRelativeMatch[1]);
+                const unit = chineseRelativeMatch[2];
+                const now = new Date();
+                
+                let targetDate = new Date(now);
+                switch (unit) {
+                    case '分钟前':
+                        targetDate.setMinutes(now.getMinutes() - amount);
+                        break;
+                    case '小时前':
+                        targetDate.setHours(now.getHours() - amount);
+                        break;
+                    case '天前':
+                        targetDate.setDate(now.getDate() - amount);
+                        break;
+                    case '星期前':
+                        targetDate.setDate(now.getDate() - (amount * 7));
+                        break;
+                }
+                
+                const year = targetDate.getFullYear();
+                const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+                const day = String(targetDate.getDate()).padStart(2, '0');
+                postingDate = `${year}${month}${day}`;
+                toastLog(`Extracted date (Chinese relative): ${dateText} → ${postingDate}`);
+            } else if (yesterdayMatch) {
+                // "昨天 08:44" format
+                const hour = yesterdayMatch[1];
+                const minute = yesterdayMatch[2];
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                yesterday.setHours(parseInt(hour), parseInt(minute), 0, 0);
+                
+                const year = yesterday.getFullYear();
+                const month = String(yesterday.getMonth() + 1).padStart(2, '0');
+                const day = String(yesterday.getDate()).padStart(2, '0');
+                postingDate = `${year}${month}${day}`;
+                toastLog(`Extracted date (Yesterday): ${dateText} → ${postingDate}`);
+            } else if (dayBeforeYesterdayMatch) {
+                // "前天 06:45" format
+                const hour = dayBeforeYesterdayMatch[1];
+                const minute = dayBeforeYesterdayMatch[2];
+                const dayBeforeYesterday = new Date();
+                dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
+                dayBeforeYesterday.setHours(parseInt(hour), parseInt(minute), 0, 0);
+                
+                const year = dayBeforeYesterday.getFullYear();
+                const month = String(dayBeforeYesterday.getMonth() + 1).padStart(2, '0');
+                const day = String(dayBeforeYesterday.getDate()).padStart(2, '0');
+                postingDate = `${year}${month}${day}`;
+                toastLog(`Extracted date (Day before yesterday): ${dateText} → ${postingDate}`);
             }
         }
         
@@ -1017,12 +1076,15 @@ function processNote(noteIndex) {
     // Extract view count
     const viewCount = extractViewCount();
     
+    // Extract restaurant information
+    const restaurantName = extractRestaurantInformation();
+    
     // Generate markdown
     const noteData = {
         title: noteTitle,
         timestamp: new Date().toISOString(),
         viewCount: viewCount,
-        restaurantName: "Unknown", // Will be enhanced later
+        restaurantName: restaurantName || "Unknown",
         imageCount: imageCount,
         markdownFile: `note_${String(noteIndex).padStart(3, '0')}_${Date.now()}.md`,
         imagePrefix: `note_${String(noteIndex).padStart(3, '0')}`,
@@ -1042,7 +1104,152 @@ function processNote(noteIndex) {
     return true;
 }
 
-// Test function removed - functionality integrated into main implementation
+/**
+ * Test function for Step 8: Extract Restaurant Information
+ * 测试函数：提取餐厅信息
+ * 
+ * Extracts restaurant name from the 2nd textview at depth 23 on the note page
+ * 从笔记页面的深度23的第2个文本视图中提取餐厅名称
+ * 
+ * @returns {string|null} - Restaurant name or null if not found
+ */
+function testExtractRestaurantInformation() {
+    toastLog("🔍 Testing restaurant information extraction...");
+    
+    try {
+        // Wait for page to load
+        dynamicSleep(2000, 3000);
+        
+        // Look for textview elements at depth 23
+        const textViews = className("android.widget.TextView").find();
+        const depth23TextViews = [];
+        
+        // Filter textviews at depth 23
+        for (let tv of textViews) {
+            if (tv.depth() === 23) {
+                depth23TextViews.push(tv);
+            }
+        }
+        
+        toastLog(`Found ${depth23TextViews.length} textviews at depth 23`);
+        
+        // Get the 2nd textview at depth 23 (index 1)
+        if (depth23TextViews.length >= 2) {
+            const restaurantTextView = depth23TextViews[1]; // 2nd element (index 1)
+            const restaurantName = restaurantTextView.text().trim();
+            
+            toastLog(`✅ Restaurant name extracted: "${restaurantName}"`);
+            return restaurantName;
+        } else {
+            toastLog(`❌ Not enough textviews at depth 23. Found: ${depth23TextViews.length}`);
+            
+            // Debug: Show all textviews at depth 23
+            for (let i = 0; i < depth23TextViews.length; i++) {
+                const tv = depth23TextViews[i];
+                toastLog(`Depth 23 TextView ${i + 1}: "${tv.text()}"`);
+            }
+            
+            return null;
+        }
+        
+    } catch (error) {
+        toastLog(`❌ Error extracting restaurant information: ${error.message}`);
+        return null;
+    }
+}
+
+/**
+ * Extract restaurant information from note page
+ * 从笔记页面提取餐厅信息
+ * 
+ * This function should be called right after extractNoteDateAndLocation()
+ * since the restaurant name is positioned right above the date/location elements
+ * 此函数应在extractNoteDateAndLocation()之后立即调用，
+ * 因为餐厅名称位于日期/位置元素的正上方
+ * 
+ * @returns {string|null} - Restaurant name or null if not found
+ */
+function extractRestaurantInformation() {
+    toastLog("🔍 Extracting restaurant information...");
+    
+    try {
+        // Since we're already scrolled down from extractNoteDateAndLocation(),
+        // we can directly look for the restaurant name at depth 23
+        // 由于我们已经从extractNoteDateAndLocation()向下滚动，
+        // 可以直接查找深度23的餐厅名称
+        
+        // Look for textview elements at depth 23
+        const textViews = className("android.widget.TextView").find();
+        const depth23TextViews = [];
+        
+        // Filter textviews at depth 23
+        for (let tv of textViews) {
+            if (tv.depth() === 23) {
+                depth23TextViews.push(tv);
+            }
+        }
+        
+        toastLog(`Found ${depth23TextViews.length} textviews at depth 23`);
+        
+        // Debug: Show all depth 23 textviews
+        for (let i = 0; i < depth23TextViews.length; i++) {
+            const tv = depth23TextViews[i];
+            toastLog(`Depth 23 TextView ${i + 1}: "${tv.text()}"`);
+        }
+        
+        // Get the 2nd textview at depth 23 (index 1)
+        if (depth23TextViews.length >= 2) {
+            const restaurantTextView = depth23TextViews[1]; // 2nd element (index 1)
+            const restaurantName = restaurantTextView.text().trim();
+            
+            if (restaurantName && restaurantName.length > 0) {
+                toastLog(`✅ Restaurant name extracted: "${restaurantName}"`);
+                return restaurantName;
+            } else {
+                toastLog("❌ Restaurant name is empty");
+                return null;
+            }
+        } else {
+            toastLog(`❌ Not enough textviews at depth 23. Found: ${depth23TextViews.length}`);
+            return null;
+        }
+        
+    } catch (error) {
+        toastLog(`❌ Error extracting restaurant information: ${error.message}`);
+        return null;
+    }
+}
+
+/**
+ * Get user input for number of notes to download
+ * 获取用户输入的下载笔记数量
+ * 
+ * @returns {number} - Number of notes to download
+ */
+function getUserInputForNoteCount() {
+    toastLog("📝 Please enter the number of new notes to download:");
+    toastLog("📝 请输入要下载的新笔记数量:");
+    
+    // Show input dialog
+    const input = dialogs.rawInput("Number of notes to download", "1");
+    
+    // Parse the input
+    let noteCount = 1; // Default value
+    if (input && input.trim() !== "") {
+        const parsed = parseInt(input.trim());
+        if (!isNaN(parsed) && parsed > 0) {
+            noteCount = parsed;
+        } else {
+            toastLog("⚠️ Invalid input, using default value of 1");
+            toastLog("⚠️ 输入无效，使用默认值 1");
+        }
+    }
+    
+    toastLog(`🎯 Will download ${noteCount} new note(s)`);
+    toastLog(`🎯 将下载 ${noteCount} 个新笔记`);
+    
+    return noteCount;
+}
 
 /**
  * Main function
@@ -1051,6 +1258,9 @@ function processNote(noteIndex) {
 function main() {
     toastLog("Starting Dianping Notes Downloader");
     toastLog("开始大众点评笔记下载器");
+    
+    // Get user input for number of notes to download
+    const maxNotesToProcess = getUserInputForNoteCount();
     
     // Display current package name
     toastLog(`Current package: ${currentPackage()}`);
@@ -1089,127 +1299,135 @@ function main() {
             return;
         }
         
-        // Load existing metadata to check for duplicates
-        const existingMetadata = loadDownloadedNotes();
-        toastLog(`Found ${existingMetadata.notes.length} previously downloaded notes`);
-        toastLog(`发现 ${existingMetadata.notes.length} 个之前下载的笔记`);
-        
-        // Display metadata statistics
+        // Load existing metadata
+        const metadata = loadDownloadedNotes();
         displayMetadataStats();
         
-        // Process notes with metadata tracking
         let processedCount = 0;
-        const maxNotesToProcess = CONFIG.maxNotesToDownload;
         
-        toastLog(`Ready to process up to ${maxNotesToProcess} notes...`);
-        toastLog(`准备处理最多 ${maxNotesToProcess} 个笔记...`);
-        
-        // Step 1: Click on first note to navigate to note page
-        const noteClickSuccess = clickFirstNote();
-        if (!noteClickSuccess) {
-            toastLog("❌ Failed to click on first note");
-            return;
-        }
-        
-        toastLog("✅ Successfully navigated to note page!");
-        
-        // Step 2: Extract note title from note page
-        const noteTitle = extractNoteTitle();
-        if (!noteTitle) {
-            toastLog("❌ Failed to extract note title");
-            return;
-        }
-        
-        toastLog(`✅ Successfully extracted note title: ${noteTitle}`);
-        
-        // Check if note is already downloaded
-        if (isNoteDownloaded(noteTitle)) {
-            toastLog(`⚠️ Note already downloaded: ${noteTitle}`);
-            toastLog(`⚠️ 笔记已下载: ${noteTitle}`);
-            return;
-        }
-        
-        // Step 3: Click on image in note page to open gallery
-        const imageClickSuccess = clickNoteImage();
-        
-        if (imageClickSuccess) {
-            toastLog("✅ Successfully clicked on note image!");
-            toastLog("✅ 成功点击笔记图片！");
+        // Process notes based on user input
+        while (processedCount < maxNotesToProcess) {
+            toastLog(`\n🔄 Processing note ${processedCount + 1}/${maxNotesToProcess}`);
+            toastLog(`🔄 处理笔记 ${processedCount + 1}/${maxNotesToProcess}`);
             
-            // Step 4: Download images with pagination
-            toastLog("Starting image download process...");
-            const imageResult = downloadNoteImages(processedCount + 1); // Use processed count + 1 for note index
-            
-            if (imageResult && imageResult.imageCount > 0) {
-                toastLog(`✅ Successfully downloaded ${imageResult.imageCount} images!`);
-                toastLog(`✅ 成功下载 ${imageResult.imageCount} 张图片！`);
-                
-                // Step 5: Move images from app directory to organized structure
-                toastLog("Moving images to organized structure...");
-                const movedImages = moveImagesFromAppDirectory(processedCount + 1, imageResult.imageCount);
-                
-                if (movedImages && movedImages.length > 0) {
-                    toastLog(`✅ Successfully moved ${movedImages.length} images to organized structure!`);
-                    toastLog(`✅ 成功移动 ${movedImages.length} 张图片到有组织的结构中！`);
-                    
-                    // Step 6: Extract additional note data
-                    const noteContent = extractNoteContent();
-                    const viewCount = extractViewCount();
-                    const { postingDate, location } = extractNoteDateAndLocation();
-                    
-                    // Step 7: Create note data object for metadata
-                    const noteData = {
-                        title: noteTitle,
-                        timestamp: new Date().toISOString(),
-                        viewCount: viewCount,
-                        restaurantName: "Unknown", // Will be enhanced later
-                        imageCount: imageResult.imageCount,
-                        postingDate: postingDate,
-                        location: location,
-                        markdownFile: `note_${postingDate || 'unknown'}_${String(processedCount + 1).padStart(3, '0')}_${Date.now()}.md`,
-                        imagePrefix: `note_${String(processedCount + 1).padStart(3, '0')}`,
-                        contentHash: generateContentHash(noteContent),
-                        downloadDate: new Date().toISOString(),
-                        images: movedImages,
-                        content: noteContent,
-                        noteIndex: processedCount + 1
-                    };
-                    
-                    // Step 8: Generate markdown file
-                    const markdownPath = generateMarkdownOnMobile(noteData);
-                    if (markdownPath) {
-                        noteData.markdownPath = markdownPath;
-                        toastLog(`✅ Generated markdown file: ${markdownPath}`);
-                    }
-                    
-                    // Step 9: Update metadata
-                    addDownloadedNote(noteData);
-                    processedCount++;
-                    
-                    toastLog(`✅ Successfully processed note: ${noteTitle}`);
-                    toastLog(`✅ 成功处理笔记: ${noteTitle}`);
-                    toastLog(`📊 Total notes processed: ${processedCount}/${maxNotesToProcess}`);
-                    toastLog(`📊 已处理笔记总数: ${processedCount}/${maxNotesToProcess}`);
-                    
-                    // Log the moved images for verification
-                    movedImages.forEach((image, index) => {
-                        toastLog(`Image ${index + 1}: ${image.originalName} → ${image.newName}`);
-                    });
-                } else {
-                    toastLog("❌ Failed to move images to organized structure");
-                    toastLog("❌ 移动图片到有组织的结构失败");
-                }
-            } else {
-                toastLog("❌ Failed to download images");
-                toastLog("❌ 下载图片失败");
+            // Extract note title first
+            const noteTitle = extractNoteTitle();
+            if (!noteTitle) {
+                toastLog("Could not extract note title, skipping");
+                return;
             }
             
-            toastLog("Metadata implementation completed. Exiting for now.");
-            toastLog("元数据实施完成。现在退出。");
-        } else {
-            toastLog("❌ Failed to click on note image");
-            toastLog("❌ 点击笔记图片失败");
+            toastLog(`✅ Successfully extracted note title: ${noteTitle}`);
+            
+            // Check if note is already downloaded
+            if (isNoteDownloaded(noteTitle)) {
+                toastLog(`⚠️ Note already downloaded: ${noteTitle}`);
+                toastLog(`⚠️ 笔记已下载: ${noteTitle}`);
+                
+                // Try to click on next note
+                const nextNoteClick = clickFirstNote();
+                if (!nextNoteClick) {
+                    toastLog("❌ No more notes available");
+                    break;
+                }
+                continue;
+            }
+            
+            // Step 3: Click on image in note page to open gallery
+            const imageClickSuccess = clickNoteImage();
+            
+            if (imageClickSuccess) {
+                toastLog("✅ Successfully clicked on note image!");
+                toastLog("✅ 成功点击笔记图片！");
+                
+                // Step 4: Download images with pagination
+                toastLog("Starting image download process...");
+                const imageResult = downloadNoteImages(processedCount + 1); // Use processed count + 1 for note index
+                
+                if (imageResult && imageResult.imageCount > 0) {
+                    toastLog(`✅ Successfully downloaded ${imageResult.imageCount} images!`);
+                    toastLog(`✅ 成功下载 ${imageResult.imageCount} 张图片！`);
+                    
+                    // Step 5: Move images from app directory to organized structure
+                    toastLog("Moving images to organized structure...");
+                    const movedImages = moveImagesFromAppDirectory(processedCount + 1, imageResult.imageCount);
+                    
+                    if (movedImages && movedImages.length > 0) {
+                        toastLog(`✅ Successfully moved ${movedImages.length} images to organized structure!`);
+                        toastLog(`✅ 成功移动 ${movedImages.length} 张图片到有组织的结构中！`);
+                        
+                        // Step 6: Extract additional note data
+                        const noteContent = extractNoteContent();
+                        const viewCount = extractViewCount();
+                        const { postingDate, location } = extractNoteDateAndLocation();
+                        
+                        // Step 7: Extract restaurant information (after scrolling from date/location extraction)
+                        const restaurantName = extractRestaurantInformation();
+                        
+                        // Step 8: Create note data object for metadata
+                        const noteData = {
+                            title: noteTitle,
+                            timestamp: new Date().toISOString(),
+                            viewCount: viewCount,
+                            restaurantName: restaurantName || "Unknown",
+                            imageCount: imageResult.imageCount,
+                            postingDate: postingDate,
+                            location: location,
+                            markdownFile: `note_${postingDate || 'unknown'}_${String(processedCount + 1).padStart(3, '0')}_${Date.now()}.md`,
+                            imagePrefix: `note_${String(processedCount + 1).padStart(3, '0')}`,
+                            contentHash: generateContentHash(noteContent),
+                            downloadDate: new Date().toISOString(),
+                            images: movedImages,
+                            content: noteContent,
+                            noteIndex: processedCount + 1
+                        };
+                        
+                        // Step 9: Generate markdown file
+                        const markdownPath = generateMarkdownOnMobile(noteData);
+                        if (markdownPath) {
+                            noteData.markdownPath = markdownPath;
+                            toastLog(`✅ Generated markdown file: ${markdownPath}`);
+                        }
+                        
+                        // Step 10: Update metadata
+                        addDownloadedNote(noteData);
+                        processedCount++;
+                        
+                        toastLog(`✅ Successfully processed note: ${noteTitle}`);
+                        toastLog(`✅ 成功处理笔记: ${noteTitle}`);
+                        toastLog(`📊 Total notes processed: ${processedCount}/${maxNotesToProcess}`);
+                        toastLog(`📊 已处理笔记总数: ${processedCount}/${maxNotesToProcess}`);
+                        
+                        // Log the moved images for verification
+                        movedImages.forEach((image, index) => {
+                            toastLog(`Image ${index + 1}: ${image.originalName} → ${image.newName}`);
+                        });
+                        
+                        // Go back to notes list for next note
+                        back();
+                        dynamicSleep(2000, 3000);
+                        
+                    } else {
+                        toastLog("❌ Failed to move images to organized structure");
+                        toastLog("❌ 移动图片到有组织的结构失败");
+                    }
+                } else {
+                    toastLog("❌ Failed to download images");
+                    toastLog("❌ 下载图片失败");
+                }
+                
+                // Go back to notes list
+                back();
+                dynamicSleep(2000, 3000);
+                
+            } else {
+                toastLog("❌ Failed to click on note image");
+                toastLog("❌ 点击笔记图片失败");
+            }
         }
+        
+        toastLog(`🎉 Download session completed! Processed ${processedCount} notes.`);
+        toastLog(`🎉 下载会话完成！处理了 ${processedCount} 个笔记。`);
         
     } catch (error) {
         toastLog(`Error: ${error.message}`);

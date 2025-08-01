@@ -960,12 +960,16 @@ extractNoteDateAndLocation():
   - After each scroll, check depth 19 for date patterns
   - Stop scrolling when date elements are found
   - Use depth 19 directly for date and location extraction
-  - Look for date element with pattern MM-DD or YYYY-MM-DD
+  - Look for date element with patterns:
+    * MM-DD or YYYY-MM-DD (standard formats)
+    * Chinese relative formats: "4小时前", "6天前", "7天前", "1星期前"
+    * Yesterday format: "昨天 08:44"
+    * Day before yesterday format: "前天 06:45"
   - Get next element as location
-  - Convert date to YYYYMMDD format for filename
+  - Convert all date formats to YYYYMMDD format for filename
   - Return postingDate and location
 ```
-**Status**: ✅ Implemented and tested with multi-scroll strategy
+**Status**: ✅ Implemented and tested with multi-scroll strategy and enhanced Chinese date format support
 
 **Key Findings from Layout Analysis:**
 - Date element "07-07" is at depth 19
@@ -979,18 +983,29 @@ extractNoteDateAndLocation():
 - **Stop early** when date pattern is found to avoid unnecessary scrolling
 - **Log progress** for debugging and monitoring
 
+**Enhanced Date Format Support:**
+- **Standard formats**: MM-DD, YYYY-MM-DD
+- **Chinese relative formats**: "4小时前", "6天前", "7天前", "1星期前"
+- **Yesterday format**: "昨天 08:44" (yesterday with time)
+- **Day before yesterday format**: "前天 06:45" (day before yesterday with time)
+- **Automatic conversion**: All formats converted to YYYYMMDD for consistent filename generation
+- **Time calculation**: Relative dates calculated based on current time/date
+
 #### Step 8: Extract Restaurant Information
-**Requirement**: Capture the name of the restaurant. To do this, click the component with the restaurant name; it will show another page with the full name of the restaurant under "商户详情".
+**Requirement**: Capture the name of the restaurant. Extract the restaurant's full name from the 2nd textview at depth 23 on the note page without navigating to the restaurant detail page.
 **Implementation**:
 ```
 PSEUDO CODE:
-extractRestaurantDetails():
-  - Click on restaurant name component
-  - Navigate to restaurant detail page
-  - Look for "商户详情" header
-  - Extract restaurant name between header and rating
-  - Navigate back to note page
+extractRestaurantInformation():
+  - Called right after extractNoteDateAndLocation() (which scrolls down)
+  - Restaurant name is positioned right above date/location elements
+  - Find all textview elements at depth 23
+  - Extract text from the 2nd textview (index 1)
+  - Return restaurant name or null if not found
 ```
+
+**Optimization**: No separate scrolling needed - leverages existing scroll from Step 7.5
+**Test Function**: `testStep8RestaurantExtraction()` - Bypasses image download to test restaurant extraction only
 
 #### Step 9: Generate Markdown File
 **Requirement**: Put the text and pictures into a markdown file.
@@ -1011,6 +1026,7 @@ generateMarkdownOnMobile(noteData):
 ```
 PSEUDO CODE:
 metadataManagement():
+  - Get user input for number of notes to download via dialog
   - Load existing metadata from downloaded_notes.json
   - Display metadata statistics (total notes, images, last updated)
   - Check for duplicates by note title before processing
@@ -1019,11 +1035,28 @@ metadataManagement():
   - Generate markdown files and track paths
   - Update metadata after each successful note download
   - Resume from last successful position
-  - Handle user input for max notes to download
+  - Process multiple notes in a loop based on user input
+  - Skip already downloaded notes and continue to next
 ```
-**Status**: ✅ Implemented with comprehensive metadata tracking
+**Status**: ✅ Implemented with comprehensive metadata tracking and user input
 
 ### 19. Recent Implementation Improvements
+
+#### ✅ Step 10 Completion Summary
+- **User Input Dialog**: ✅ `getUserInputForNoteCount()` function with input validation
+- **Multiple Note Processing**: ✅ Loop-based workflow to process specified number of notes
+- **Duplicate Detection**: ✅ Skip already downloaded notes and continue to next
+- **Progress Tracking**: ✅ Real-time progress display (X/Y notes processed)
+- **Resume Capability**: ✅ Continue from last position, no duplicate downloads
+- **Error Handling**: ✅ Graceful handling of invalid input and edge cases
+
+#### ✅ Step 8 Completion Summary
+- **Restaurant Information Extraction**: ✅ Implemented with depth 23 targeting
+- **Optimized Workflow**: ✅ Called right after `extractNoteDateAndLocation()` to leverage existing scroll
+- **Direct Text Extraction**: ✅ Extract from 2nd textview at depth 23 without navigation
+- **Test Function**: ✅ `testStep8RestaurantExtraction()` for isolated testing
+- **Integration**: ✅ Added to main workflow and `processNote()` function
+- **Error Handling**: ✅ Comprehensive error handling and logging
 
 #### ✅ Step 7 Completion Summary
 - **Note Content Extraction**: ✅ Implemented with hashtag marker approach
