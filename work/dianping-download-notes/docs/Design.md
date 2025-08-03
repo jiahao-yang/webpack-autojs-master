@@ -1045,7 +1045,7 @@ metadataManagement():
 
 ---
 
-## 20. img.remit.ee API Integration (图片托管API集成)
+## 19. img.remit.ee API Integration (图片托管API集成)
 
 **Service**: img.remit.ee - Free image hosting service  
 **Endpoint**: `https://img.remit.ee/api/upload`  
