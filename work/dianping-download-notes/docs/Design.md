@@ -157,7 +157,7 @@ const DOWNLOADED_NOTES = {
             viewCount: "182",
             restaurantName: "始于1987年客家食府农庄・派潭烧鸡·竹筒饭",
             imageCount: 3,
-            markdownFile: "note_001_1753871876436.md",
+            markdownFile: "note_20240115_001_1753871876436.md",
             imagePrefix: "note_001", // For filename mapping
             contentHash: "abc123...", // For duplicate detection
             downloadDate: "2024-01-15T10:30:00Z",
@@ -593,7 +593,7 @@ function processNote(noteIndex) {
         viewCount: extractViewCount(),
         restaurantName: restaurantInfo.name,
         imageCount: imageCount,
-        markdownFile: `note_${String(noteIndex).padStart(3, '0')}_${Date.now()}.md`,
+        markdownFile: `note_${postingDate}_${String(noteIndex).padStart(3, '0')}_${Date.now()}.md`,
         imagePrefix: `note_${String(noteIndex).padStart(3, '0')}`,
         contentHash: generateContentHash(noteContent),
         downloadDate: new Date().toISOString(),
@@ -781,7 +781,7 @@ function resumeFromMetadata() {
 ```
 /storage/emulated/0/Download/dianping_notes/
 ├── markdown/
-│   ├── note_001_1753871876436.md
+│   ├── note_20240115_001_1753871876436.md
 │   ├── note_002_1753871876437.md
 │   └── note_003_1753871876438.md
 ├── images/
@@ -808,9 +808,14 @@ function resumeFromMetadata() {
   - No nested directories
 
 ### 17.2 Markdown Naming Convention (Markdown命名约定)
-- **Format**: `note_XXX_TIMESTAMP.md`
-- **Example**: `note_001_1753871876436.md`
+- **Format**: `note_<posting date>_XXX_TIMESTAMP.md`
+- **Example**: `note_20240115_001_1753871876436.md`
+- **Components**:
+  - `<posting date>`: Date when note was posted (YYYYMMDD format)
+  - `XXX`: Sequential number for notes posted on same date
+  - `TIMESTAMP`: Unique timestamp to prevent conflicts
 - **Benefits**:
+  - Chronological sorting by posting date
   - Unique timestamps prevent conflicts
   - Clear note sequence
   - Easy to match with images
@@ -1017,7 +1022,7 @@ generateMarkdownOnMobile(noteData):
   - Add image references using relative paths
   - Add note content text
   - Save to /storage/emulated/0/Download/dianping_notes/markdown/
-  - Use filename pattern: note_XXX_TIMESTAMP.md
+  - Use filename pattern: note_<posting date>_XXX_TIMESTAMP.md
 ```
 
 #### Step 10: Update Metadata and Resume
@@ -1040,30 +1045,44 @@ metadataManagement():
 ```
 **Status**: ✅ Implemented with comprehensive metadata tracking and user input
 
-### 19. Recent Implementation Improvements
+## 20. img.remit.ee API Integration (图片托管API集成)
 
-#### ✅ Step 10 Completion Summary
-- **User Input Dialog**: ✅ `getUserInputForNoteCount()` function with input validation
-- **Multiple Note Processing**: ✅ Loop-based workflow to process specified number of notes
-- **Duplicate Detection**: ✅ Skip already downloaded notes and continue to next
-- **Progress Tracking**: ✅ Real-time progress display (X/Y notes processed)
-- **Resume Capability**: ✅ Continue from last position, no duplicate downloads
-- **Error Handling**: ✅ Graceful handling of invalid input and edge cases
+**Service**: img.remit.ee - Free image hosting service  
+**Endpoint**: `https://img.remit.ee/api/upload`  
+**Method**: POST with `file` parameter (multipart/form-data)  
+**Response**: `{"success": true, "url": "/api/file/..."}`  
 
-#### ✅ Step 8 Completion Summary
-- **Restaurant Information Extraction**: ✅ Implemented with depth 23 targeting
-- **Optimized Workflow**: ✅ Called right after `extractNoteDateAndLocation()` to leverage existing scroll
-- **Direct Text Extraction**: ✅ Extract from 2nd textview at depth 23 without navigation
-- **Test Function**: ✅ `testStep8RestaurantExtraction()` for isolated testing
-- **Integration**: ✅ Added to main workflow and `processNote()` function
-- **Error Handling**: ✅ Comprehensive error handling and logging
+### Benefits
+✅ **Free hosting** with CDN delivery  
+✅ **External access** - images accessible from anywhere  
+✅ **Automatic optimization** - JPEG → WebP conversion  
+✅ **Markdown ready** - direct URL integration  
 
-#### ✅ Step 7 Completion Summary
-- **Note Content Extraction**: ✅ Implemented with hashtag marker approach
-- **Date and Location Extraction**: ✅ Implemented with multi-scroll strategy
-- **Multi-Scroll Strategy**: ✅ Up to 3 scroll attempts with early termination
-- **Depth 19 Optimization**: ✅ Direct depth targeting for reliable extraction
-- **Date Format Conversion**: ✅ MM-DD/YYYY-MM-DD to YYYYMMDD for filenames
+### Implementation
+```javascript
+const IMG_REMIT_CONFIG = {
+    uploadUrl: "https://img.remit.ee/api/upload",
+    enableUpload: true,
+    uploadDelay: 1000,
+    maxRetries: 3,
+    timeout: 30000
+};
+```
+
+### Workflow
+1. Download images to local storage
+2. Upload to img.remit.ee via API
+3. Get external URLs from response
+4. Use external URLs in markdown (fallback to local paths)
+5. Store both local and external URLs in metadata
+
+### Test Results
+- ✅ **API Verified**: Endpoint working with curl test
+- ✅ **Upload Successful**: Test image uploaded and accessible
+- ✅ **Markdown Integration**: External links display correctly
+- ✅ **Format Optimization**: JPEG automatically converted to WebP
+
+---
 
 ### 18.2 Error Handling Strategy (错误处理策略)
 
