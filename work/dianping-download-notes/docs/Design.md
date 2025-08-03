@@ -322,6 +322,39 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
     return movedImages;
 }
 
+### 7.3 Download Current Image (下载当前图像)
+```javascript
+function downloadCurrentImage(noteIndex, imageNumber) {
+    try {
+        // Find and click the menu button using multiple strategies
+        if (!findAndClickMenuButton()) {
+            toastLog("Failed to find and click menu button");
+            return null;
+        }
+        
+        // Click "保存图片" using position-based clicking
+        const saveOption = text("保存图片").findOne(3000);
+        if (!saveOption) {
+            toastLog("Save option not found");
+            return null;
+        }
+        click(saveOption.bounds().centerX(), saveOption.bounds().centerY());
+        dynamicSleep(CONFIG.saveOperationDelay, CONFIG.saveOperationDelay + 2000);
+        
+        // Wait for save operation to complete (message appears too quickly to detect reliably)
+        dynamicSleep(CONFIG.saveOperationDelay, CONFIG.saveOperationDelay + 1000);
+        
+        const imageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(imageNumber).padStart(3, '0')}.png`;
+        toastLog(`Image ${imageNumber} downloaded successfully: ${imageName}`);
+        return imageName;
+        
+    } catch (error) {
+        toastLog(`Error downloading image ${imageNumber}: ${error.message}`);
+        return null;
+    }
+}
+```
+
 ### 7.4 Enhanced Swipe to Next Image (增强的滑动到下一张图片)
 ```javascript
 function swipeToNextImage() {
@@ -472,39 +505,6 @@ function findAndClickMenuButton() {
 - **ImageView detection**: Look for ImageView elements in top-right area
 - **Position fallback**: Click in top-right corner as last resort
 - **Avoid back button**: Only use "..." button, not "<" button to prevent back action
-
-### 7.3 Download Current Image (下载当前图像)
-```javascript
-function downloadCurrentImage(noteIndex, imageNumber) {
-    try {
-        // Find and click the menu button using multiple strategies
-        if (!findAndClickMenuButton()) {
-            toastLog("Failed to find and click menu button");
-            return null;
-        }
-        
-        // Click "保存图片" using position-based clicking
-        const saveOption = text("保存图片").findOne(3000);
-        if (!saveOption) {
-            toastLog("Save option not found");
-            return null;
-        }
-        click(saveOption.bounds().centerX(), saveOption.bounds().centerY());
-        dynamicSleep(CONFIG.saveOperationDelay, CONFIG.saveOperationDelay + 2000);
-        
-        // Wait for save operation to complete (message appears too quickly to detect reliably)
-        dynamicSleep(CONFIG.saveOperationDelay, CONFIG.saveOperationDelay + 1000);
-        
-        const imageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(imageNumber).padStart(3, '0')}.png`;
-        toastLog(`Image ${imageNumber} downloaded successfully: ${imageName}`);
-        return imageName;
-        
-    } catch (error) {
-        toastLog(`Error downloading image ${imageNumber}: ${error.message}`);
-        return null;
-    }
-}
-```
 
 ## 8. UI Elements (UI元素)
 
@@ -822,52 +822,6 @@ function resumeFromMetadata() {
 
 ---
 
-## 19. Recent Implementation Improvements (最近实施改进)
-
-### 19.1 Dynamic Sleep Anti-Detection (动态睡眠反检测)
-- **Implemented `dynamicSleep()` function** with randomized timing (1500-4000ms)
-- **Replaced all static `sleep()` calls** with dynamic timing
-- **Added operation-specific delays** for different UI interactions
-- **Prioritized safety over speed** to avoid automation detection
-
-### 19.2 Enhanced Image Download Process (增强的图像下载流程)
-- **Removed dependency on `clickFirstImage()`** - now uses `clickNoteImage()` with fixed bounds
-- **Implemented `findAndClickMenuButton()`** with multiple detection strategies
-- **Added specific bounds for "..." button** `(924,146,1044,266)` for reliable clicking
-- **Avoided "<" button** to prevent accidental back() actions
-- **Removed unreliable "保存成功" message detection** - replaced with dynamic sleep
-
-### 19.3 Improved Swipe Functionality (改进的滑动功能)
-- **Enhanced `swipeToNextImage()`** with multiple strategies
-- **Longer swipe distance** (90% to 10% of screen width)
-- **Multiple Y positions** (30%, 50%, 70% of screen height)
-- **Success verification** by checking image counter changes
-- **Fallback strategies** if primary swipe fails
-
-### 19.4 Menu Button Detection (菜单按钮检测)
-- **Multiple text patterns**: `["...", "⋮", "⋯", "更多", "菜单"]`
-- **Specific bounds clicking** for reliable menu access
-- **ImageView detection** in top-right area
-- **Position-based fallback** as last resort
-- **Comprehensive error handling** with detailed logging
-
-### 19.5 Image Counter Pattern Fix (图像计数器模式修复)
-- **Updated regex pattern** from `/^\d+\/\d+$/` to `/^\d+\s*\/\s*\d+$/`
-- **Handles spaces around slash** in "1 / 7" format
-- **More robust pattern matching** for different app versions
-
-### 19.6 Success Criteria Achievements (成功标准达成)
-- ✅ **Image download works reliably** with pagination support
-- ✅ **Dynamic sleep prevents detection** with human-like timing
-- ✅ **Menu button detection robust** with multiple strategies
-- ✅ **Swipe functionality enhanced** with fallback approaches
-- ✅ **File organization successful** with proper naming conventions
-- ✅ **Error handling comprehensive** with detailed logging
-
----
-
-*Revised design with flat image directory structure using filename-based mapping for easier browsing, enhanced with dynamic sleep anti-detection and robust image download functionality.* 
-
 ## 18. Workflow Implementation (工作流程实现)
 
 ### 18.1 Requirements Workflow Integration (需求工作流程集成)
@@ -1045,45 +999,6 @@ metadataManagement():
 ```
 **Status**: ✅ Implemented with comprehensive metadata tracking and user input
 
-## 20. img.remit.ee API Integration (图片托管API集成)
-
-**Service**: img.remit.ee - Free image hosting service  
-**Endpoint**: `https://img.remit.ee/api/upload`  
-**Method**: POST with `file` parameter (multipart/form-data)  
-**Response**: `{"success": true, "url": "/api/file/..."}`  
-
-### Benefits
-✅ **Free hosting** with CDN delivery  
-✅ **External access** - images accessible from anywhere  
-✅ **Automatic optimization** - JPEG → WebP conversion  
-✅ **Markdown ready** - direct URL integration  
-
-### Implementation
-```javascript
-const IMG_REMIT_CONFIG = {
-    uploadUrl: "https://img.remit.ee/api/upload",
-    enableUpload: true,
-    uploadDelay: 1000,
-    maxRetries: 3,
-    timeout: 30000
-};
-```
-
-### Workflow
-1. Download images to local storage
-2. Upload to img.remit.ee via API
-3. Get external URLs from response
-4. Use external URLs in markdown (fallback to local paths)
-5. Store both local and external URLs in metadata
-
-### Test Results
-- ✅ **API Verified**: Endpoint working with curl test
-- ✅ **Upload Successful**: Test image uploaded and accessible
-- ✅ **Markdown Integration**: External links display correctly
-- ✅ **Format Optimization**: JPEG automatically converted to WebP
-
----
-
 ### 18.2 Error Handling Strategy (错误处理策略)
 
 #### Navigation Failures
@@ -1126,4 +1041,43 @@ const IMG_REMIT_CONFIG = {
 #### User Experience
 - **Progress feedback**: Toast messages for each step
 - **Error reporting**: Clear error messages with context
-- **Completion status**: Final summary of downloaded content 
+- **Completion status**: Final summary of downloaded content
+
+---
+
+## 20. img.remit.ee API Integration (图片托管API集成)
+
+**Service**: img.remit.ee - Free image hosting service  
+**Endpoint**: `https://img.remit.ee/api/upload`  
+**Method**: POST with `file` parameter (multipart/form-data)  
+**Response**: `{"success": true, "url": "/api/file/..."}`  
+
+### Benefits
+✅ **Free hosting** with CDN delivery  
+✅ **External access** - images accessible from anywhere  
+✅ **Automatic optimization** - JPEG → WebP conversion  
+✅ **Markdown ready** - direct URL integration  
+
+### Implementation
+```javascript
+const IMG_REMIT_CONFIG = {
+    uploadUrl: "https://img.remit.ee/api/upload",
+    enableUpload: true,
+    uploadDelay: 1000,
+    maxRetries: 3,
+    timeout: 30000
+};
+```
+
+### Workflow
+1. Download images to local storage
+2. Upload to img.remit.ee via API
+3. Get external URLs from response
+4. Use external URLs in markdown (fallback to local paths)
+5. Store both local and external URLs in metadata
+
+### Test Results
+- ✅ **API Verified**: Endpoint working with curl test
+- ✅ **Upload Successful**: Test image uploaded and accessible
+- ✅ **Markdown Integration**: External links display correctly
+- ✅ **Format Optimization**: JPEG automatically converted to WebP 
