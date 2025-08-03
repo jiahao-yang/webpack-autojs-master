@@ -780,20 +780,23 @@ function resumeFromMetadata() {
 
 ```
 /storage/emulated/0/Download/dianping_notes/
-├── markdown/
-│   ├── note_20240115_001_1753871876436.md
-│   ├── note_002_1753871876437.md
-│   └── note_003_1753871876438.md
-├── images/
-│   ├── note_001_image_001.png  ← All images in one directory
-│   ├── note_001_image_002.png
-│   ├── note_001_image_003.png
-│   ├── note_002_image_001.png
-│   ├── note_002_image_002.png
-│   ├── note_003_image_001.png
-│   └── note_003_image_002.png
-├── downloaded_notes.json  ← Metadata persistence
-└── download_state.json    ← Session state
+├── internal_vault/                    ← Obsidian vault (local access)
+│   ├── note_20240115_001_1753871876436_internal.md
+│   ├── note_20240115_002_1753871876437_internal.md
+│   └── images/
+│       ├── note_001_image_001.png
+│       ├── note_001_image_002.png
+│       ├── note_002_image_001.png
+│       └── note_002_image_002.png
+├── external_public/                   ← Public sharing (Cloudflare)
+│   ├── note_20240115_001_1753871876436_external.md
+│   └── note_20240115_002_1753871876437_external.md
+├── metadata/
+│   ├── downloaded_notes.json         ← Metadata persistence
+│   └── upload_errors.log             ← Upload error logging
+├── temp_images/                      ← Temporary storage
+│   └── [original downloaded images]
+└── download_state.json               ← Session state
 ```
 
 ## 17. Filename Mapping (文件名映射)
@@ -808,17 +811,22 @@ function resumeFromMetadata() {
   - No nested directories
 
 ### 17.2 Markdown Naming Convention (Markdown命名约定)
-- **Format**: `note_<posting date>_XXX_TIMESTAMP.md`
-- **Example**: `note_20240115_001_1753871876436.md`
+- **Internal Format**: `note_<posting date>_XXX_TIMESTAMP_internal.md`
+- **External Format**: `note_<posting date>_XXX_TIMESTAMP_external.md`
+- **Examples**: 
+  - `note_20240115_001_1753871876436_internal.md`
+  - `note_20240115_001_1753871876436_external.md`
 - **Components**:
   - `<posting date>`: Date when note was posted (YYYYMMDD format)
   - `XXX`: Sequential number for notes posted on same date
   - `TIMESTAMP`: Unique timestamp to prevent conflicts
+  - `_internal` or `_external`: Clear identification of purpose
 - **Benefits**:
   - Chronological sorting by posting date
   - Unique timestamps prevent conflicts
-  - Clear note sequence
+  - Clear note sequence identification
   - Easy to match with images
+  - Clear separation between internal and external versions
 
 ---
 
@@ -1052,32 +1060,172 @@ metadataManagement():
 **Method**: POST with `file` parameter (multipart/form-data)  
 **Response**: `{"success": true, "url": "/api/file/..."}`  
 
-### Benefits
-✅ **Free hosting** with CDN delivery  
-✅ **External access** - images accessible from anywhere  
-✅ **Automatic optimization** - JPEG → WebP conversion  
-✅ **Markdown ready** - direct URL integration  
+### 19.1 Dual Markdown Strategy (双重Markdown策略)
 
-### Implementation
+#### Internal Vault (Obsidian兼容)
+- **Purpose**: Local access and Obsidian vault compatibility
+- **Image links**: Relative paths for local images
+- **Structure**: Self-contained vault with images in same directory
+- **Use case**: Transfer to PC, offline access, personal notes
+
+#### External Public (公共分享)
+- **Purpose**: Public sharing via Cloudflare hosting
+- **Image links**: External img.remit.ee URLs
+- **Structure**: Markdown only, no local images needed
+- **Use case**: Web publishing, social sharing, public access
+
+### 19.2 Enhanced File Structure (增强文件结构)
+
+```
+/storage/emulated/0/Download/dianping_notes/
+├── internal_vault/                    ← Obsidian vault
+│   ├── note_20240115_001_1753871876436_internal.md
+│   ├── note_20240115_002_1753871876437_internal.md
+│   └── images/
+│       ├── note_001_image_001.png
+│       ├── note_001_image_002.png
+│       ├── note_002_image_001.png
+│       └── note_002_image_002.png
+├── external_public/                   ← Public sharing
+│   ├── note_20240115_001_1753871876436_external.md
+│   └── note_20240115_002_1753871876437_external.md
+├── metadata/
+│   ├── downloaded_notes.json
+│   └── upload_errors.log             ← Error logging
+└── temp_images/                      ← Temporary storage
+    └── [original downloaded images]
+```
+
+### 19.3 Implementation Strategy (实施策略)
+
+#### Upload Strategy
+- **Immediate upload**: Upload each image right after download
+- **Individual processing**: Avoid bulk upload limitations
+- **Error handling**: Log failures, continue with internal MD
+- **Retry mechanism**: 3 attempts with exponential backoff
+
+#### Error Handling
+- **Upload failures**: Log to `upload_errors.log` for manual review
+- **External MD**: Only generate if all uploads successful
+- **Internal MD**: Always generate as fallback
+- **Graceful degradation**: Continue processing even with upload failures
+
+#### File Naming Convention
+- **Internal MD**: `note_<date>_XXX_TIMESTAMP_internal.md`
+- **External MD**: `note_<date>_XXX_TIMESTAMP_external.md`
+- **Images**: `note_XXX_image_YYY.png` (same for both)
+- **Clear identification**: `_internal` and `_external` suffixes
+
+### 19.4 Enhanced Metadata Structure (增强元数据结构)
+
+```javascript
+{
+    title: "1987年炭火鸡! 派潭第一鸡名不虚传🔥",
+    timestamp: "2024-01-15T10:30:00Z",
+    viewCount: "182",
+    restaurantName: "始于1987年客家食府农庄・派潭烧鸡·竹筒饭",
+    imageCount: 3,
+    markdownFiles: {
+        internal: "internal_vault/note_20240115_001_1753871876436_internal.md",
+        external: "external_public/note_20240115_001_1753871876436_external.md"
+    },
+    images: [
+        {
+            originalName: "IMG_20240115_103001.jpg",
+            newName: "note_001_image_001.png",
+            localPath: "internal_vault/images/note_001_image_001.png",
+            externalUrl: "https://img.remit.ee/api/file/...",
+            uploadSuccess: true,
+            uploadTimestamp: "2024-01-15T10:30:05Z"
+        }
+    ],
+    uploadStatus: {
+        totalImages: 3,
+        successfulUploads: 3,
+        failedUploads: 0,
+        externalMdGenerated: true
+    }
+}
+```
+
+### 19.5 Configuration (配置)
+
 ```javascript
 const IMG_REMIT_CONFIG = {
     uploadUrl: "https://img.remit.ee/api/upload",
     enableUpload: true,
-    uploadDelay: 1000,
-    maxRetries: 3,
-    timeout: 30000
+    uploadDelay: 1000,        // Delay between uploads
+    maxRetries: 3,            // Retry attempts per image
+    timeout: 30000,           // Request timeout
+    retryDelay: 2000,         // Base delay for retries
+    
+    // File structure
+    internalVaultDir: "internal_vault/",
+    externalPublicDir: "external_public/",
+    imagesSubDir: "images/",
+    metadataDir: "metadata/",
+    tempImagesDir: "temp_images/",
+    
+    // Error handling
+    errorLogFile: "metadata/upload_errors.log",
+    continueOnUploadFailure: true,
+    generateExternalMdOnlyOnSuccess: true
 };
 ```
 
-### Workflow
-1. Download images to local storage
-2. Upload to img.remit.ee via API
-3. Get external URLs from response
-4. Use external URLs in markdown (fallback to local paths)
-5. Store both local and external URLs in metadata
+### 19.6 Workflow Implementation (工作流程实施)
 
-### Test Results
-- ✅ **API Verified**: Endpoint working with curl test
-- ✅ **Upload Successful**: Test image uploaded and accessible
-- ✅ **Markdown Integration**: External links display correctly
-- ✅ **Format Optimization**: JPEG automatically converted to WebP 
+#### Step-by-Step Process
+1. **Download images** → Save to temp directory
+2. **Move to internal vault** → Organize with relative paths
+3. **Upload to img.remit.ee** → Get external URLs
+4. **Generate internal MD** → Use relative image paths
+5. **Generate external MD** → Use external URLs (if uploads successful)
+6. **Update metadata** → Track both versions and upload status
+7. **Clean up temp files** → Remove temporary images
+
+#### Error Handling Workflow
+```javascript
+function handleImageUpload(imagePath, imageName) {
+    try {
+        const externalUrl = uploadToImgRemit(imagePath);
+        return { success: true, externalUrl };
+    } catch (error) {
+        logUploadError(imageName, error);
+        return { success: false, error: error.message };
+    }
+}
+
+function generateMarkdownFiles(noteData) {
+    // Always generate internal MD
+    generateInternalMarkdown(noteData);
+    
+    // Only generate external MD if all uploads successful
+    if (noteData.uploadStatus.successfulUploads === noteData.uploadStatus.totalImages) {
+        generateExternalMarkdown(noteData);
+    }
+}
+```
+
+### 19.7 Benefits of This Approach (此方法的优势)
+
+#### For Internal Vault
+- ✅ **Obsidian compatibility**: Self-contained structure
+- ✅ **Relative paths**: `![Image](images/note_001_image_001.png)` works perfectly
+- ✅ **Offline access**: No internet dependency
+- ✅ **Portability**: Easy transfer to PC
+- ✅ **Always available**: Generated regardless of upload status
+
+#### For External Public
+- ✅ **Public sharing**: External URLs accessible anywhere
+- ✅ **No bandwidth costs**: img.remit.ee handles hosting
+- ✅ **CDN delivery**: Global content distribution
+- ✅ **Clean structure**: Markdown only, no local files needed
+- ✅ **Quality assurance**: Only generated when uploads successful
+
+#### Overall Benefits
+- ✅ **Dual purpose**: Local access + public sharing
+- ✅ **Error resilience**: Internal MD always available
+- ✅ **Clear separation**: Internal vs external content
+- ✅ **Scalable**: Easy to add more external platforms
+- ✅ **Maintainable**: Clear file organization and error logging 
