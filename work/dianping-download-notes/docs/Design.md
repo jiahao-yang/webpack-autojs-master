@@ -1083,12 +1083,13 @@ metadataManagement():
 
 ---
 
-## 19. img.remit.ee API Integration (图片托管API集成)
+## 19. ImgBB API Integration (图片托管API集成)
 
-**Service**: img.remit.ee - Free image hosting service  
-**Endpoint**: `https://img.remit.ee/api/upload`  
-**Method**: POST with `file` parameter (multipart/form-data)  
-**Response**: `{"success": true, "url": "/api/file/..."}`  
+**Service**: ImgBB - Free image hosting service  
+**Endpoint**: `https://api.imgbb.com/1/upload`  
+**Method**: POST with `key` and `image` parameters  
+**Response**: `{"success": true, "data": {"url": "https://i.ibb.co/..."}}`  
+**API Key**: `b4c48cb837bf0fb4217ccac1cd27f59f`  
 
 ### 19.1 Dual Markdown Strategy (双重Markdown策略)
 
@@ -1100,7 +1101,7 @@ metadataManagement():
 
 #### External Public (公共分享)
 - **Purpose**: Public sharing via Cloudflare hosting
-- **Image links**: External img.remit.ee URLs
+- **Image links**: External ImgBB URLs
 - **Structure**: Markdown only, no local images needed
 - **Use case**: Web publishing, social sharing, public access
 
@@ -1122,8 +1123,6 @@ metadataManagement():
 ├── metadata/
 │   ├── downloaded_notes.json
 │   └── upload_errors.log             ← Error logging
-└── temp_images/                      ← Temporary storage
-    └── [original downloaded images]
 ```
 
 ### 19.3 Implementation Strategy (实施策略)
@@ -1181,25 +1180,12 @@ metadataManagement():
 ### 19.5 Configuration (配置)
 
 ```javascript
-const IMG_REMIT_CONFIG = {
-    uploadUrl: "https://img.remit.ee/api/upload",
-    enableUpload: true,
-    uploadDelay: 1000,        // Delay between uploads
-    maxRetries: 3,            // Retry attempts per image
-    timeout: 30000,           // Request timeout
-    retryDelay: 2000,         // Base delay for retries
-    
-    // File structure
-    internalVaultDir: "internal_vault/",
-    externalPublicDir: "external_public/",
-    imagesSubDir: "images/",
-    metadataDir: "metadata/",
-    tempImagesDir: "temp_images/",
-    
-    // Error handling
-    errorLogFile: "metadata/upload_errors.log",
-    continueOnUploadFailure: true,
-    generateExternalMdOnlyOnSuccess: true
+const IMGBB_CONFIG = {
+    apiKey: "b4c48cb837bf0fb4217ccac1cd27f59f",
+    uploadUrl: "https://api.imgbb.com/1/upload",
+    enabled: true, // Set to false to disable image hosting
+    maxRetries: 3,
+    retryDelay: 2000
 };
 ```
 
@@ -1214,21 +1200,18 @@ const IMG_REMIT_CONFIG = {
 6. **Update metadata** → Track both versions and upload status
 7. **Clean up temp files** → Remove temporary images
 
-#### Error Handling Workflow
+#### Upload Implementation
 ```javascript
-function handleImageUpload(imagePath, imageName) {
-    try {
-        const externalUrl = uploadToImgRemit(imagePath);
-        return { success: true, externalUrl };
-    } catch (error) {
-        logUploadError(imageName, error);
-        return { success: false, error: error.message };
-    }
-}
-
-function generateMarkdownFiles(noteData) {
-    // Always generate internal MD
-    generateInternalMarkdown(noteData);
+function uploadImageToImgBB(imagePath, imageName = null) {
+    // Convert image to base64
+    const imageBytes = files.readBytes(imagePath);
+    const base64Data = android.util.Base64.encodeToString(imageBytes, android.util.Base64.DEFAULT);
+    
+    // Upload to ImgBB
+    const response = http.post(IMGBB_CONFIG.uploadUrl, {
+        key: IMGBB_CONFIG.apiKey,
+        image: base64Data
+    });
     
     // Only generate external MD if all uploads successful
     if (noteData.uploadStatus.successfulUploads === noteData.uploadStatus.totalImages) {
@@ -1248,7 +1231,7 @@ function generateMarkdownFiles(noteData) {
 
 #### For External Public
 - ✅ **Public sharing**: External URLs accessible anywhere
-- ✅ **No bandwidth costs**: img.remit.ee handles hosting
+- ✅ **No bandwidth costs**: ImgBB handles hosting
 - ✅ **CDN delivery**: Global content distribution
 - ✅ **Clean structure**: Markdown only, no local files needed
 - ✅ **Quality assurance**: Only generated when uploads successful
@@ -1258,4 +1241,69 @@ function generateMarkdownFiles(noteData) {
 - ✅ **Error resilience**: Internal MD always available
 - ✅ **Clear separation**: Internal vs external content
 - ✅ **Scalable**: Easy to add more external platforms
-- ✅ **Maintainable**: Clear file organization and error logging 
+- ✅ **Maintainable**: Clear file organization and error logging
+
+## 20. img.remit.ee Limitations (img.remit.ee 限制)
+
+### 20.1 Compatibility Issues (兼容性问题)
+
+**Problem**: img.remit.ee API has compatibility issues with AutoX.js mobile environment.
+
+#### Technical Limitations
+- ❌ **500 Server Errors**: "文件上传失败" (File upload failed) on mobile
+- ❌ **Response Parsing Issues**: `java.lang.IllegalStateException: closed`
+- ❌ **Multipart Form Data**: AutoX.js constructs requests differently than curl
+- ❌ **Base64 Encoding**: Server rejects base64-encoded data from mobile clients
+- ❌ **HTTPS/TLS Handling**: Different behavior between PC curl and mobile AutoX.js
+
+#### Testing Results
+- ✅ **PC curl works**: `{"success":true,"url":"/api/file/..."}`
+- ❌ **Mobile AutoX.js fails**: 500 errors with all upload methods
+- ❌ **All variations failed**: Manual FormData, raw bytes, file upload
+- ❌ **No workaround found**: Multiple test scripts all failed
+
+#### Root Cause Analysis
+1. **Server-side restrictions**: img.remit.ee may have mobile client limitations
+2. **Request format differences**: AutoX.js HTTP library vs curl behavior
+3. **Data encoding issues**: Server expects different format than what AutoX.js sends
+4. **API changes**: Possible recent changes to img.remit.ee API
+
+### 20.2 Alternative Solution (替代解决方案)
+
+**Solution**: Switched to ImgBB API which is more compatible with AutoX.js.
+
+#### Why ImgBB Works
+- ✅ **Simpler API**: Designed for easy integration
+- ✅ **Base64 support**: Native support for base64-encoded images
+- ✅ **Mobile friendly**: Better compatibility with mobile HTTP clients
+- ✅ **Reliable response**: Consistent JSON responses
+- ✅ **Free service**: No cost for image hosting
+
+#### ImgBB Advantages
+- ✅ **API Key**: Simple authentication
+- ✅ **Multiple formats**: Supports file upload, base64, and URLs
+- ✅ **Large files**: Up to 32 MB per image
+- ✅ **CDN delivery**: Fast global access
+- ✅ **Permanent URLs**: No expiration unless specified
+
+### 20.3 Lessons Learned (经验教训)
+
+#### API Selection Criteria
+1. **Mobile compatibility**: Test with AutoX.js before implementation
+2. **Simple authentication**: API keys preferred over complex auth
+3. **Base64 support**: Essential for mobile environments
+4. **Error handling**: Clear error responses for debugging
+5. **Documentation quality**: Well-documented APIs reduce integration time
+
+#### Testing Strategy
+1. **PC verification**: Always test APIs on PC first with curl
+2. **Mobile testing**: Test on actual mobile device with AutoX.js
+3. **Multiple methods**: Try different upload approaches
+4. **Error analysis**: Understand why failures occur
+5. **Alternative planning**: Have backup APIs ready
+
+#### Future Considerations
+- **API reliability**: Choose services with proven mobile compatibility
+- **Fallback options**: Always have local-only mode as backup
+- **Error logging**: Comprehensive logging for troubleshooting
+- **User feedback**: Clear status messages for upload progress 

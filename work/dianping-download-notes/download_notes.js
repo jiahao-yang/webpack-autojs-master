@@ -21,14 +21,20 @@ const APP_NAME = "大众点评";
 const USER_NICKNAME = "尘世中的小吃货"; // User nickname from the image
 const NOTES_TAB_TEXT = "笔记"; // Notes tab text
 
+// ImgBB API configuration
+const IMGBB_CONFIG = {
+    apiKey: "b4c48cb837bf0fb4217ccac1cd27f59f",
+    uploadUrl: "https://api.imgbb.com/1/upload",
+    maxRetries: 3,
+    retryDelay: 2000
+};
+
 // Configuration
 const CONFIG = {
     maxNotesToDownload: 1, // Test with just one note
-    baseDownloadDir: "/storage/emulated/0/Download/dianping_notes/",
-    imagesSubDir: "images/",
-    markdownSubDir: "markdown/",
     stateFile: "download_state.json",
     metadataFile: "downloaded_notes.json",
+    uploadErrorsFile: "upload_errors.log",
     appImagesDir: "/storage/emulated/0/Pictures/", // Default app image location
     navigationDelay: 2000,
     imageDownloadDelay: 2000,
@@ -61,6 +67,211 @@ const STATE = {
     sessionStartTime: null,
     sessionId: null
 };
+
+/**
+ * Directory management configuration
+ * 目录管理配置
+ */
+const DIRECTORY_CONFIG = {
+    // Base directory structure
+    baseDir: "/storage/emulated/0/Download/dianping_notes/",
+    subDirs: {
+        internalVault: "internal_vault/",
+        externalPublic: "external_public/",
+        images: "images/",
+        markdown: "markdown/",
+        metadata: "metadata/"
+    },
+    
+    // Directory creation settings
+    creation: {
+        maxRetries: 3,
+        retryDelay: 1000,
+        verificationDelay: 500,
+        tempFileSuffix: ".temp"
+    },
+    
+    // Directory verification settings
+    verification: {
+        timeout: 5000,
+        checkInterval: 200
+    }
+};
+
+/**
+ * Creates a directory using ensureDir with temp file method
+ * 使用ensureDir和临时文件方法创建目录
+ * 
+ * @param {string} dirPath - Directory path to create
+ * @param {string} dirName - Human-readable directory name for logging
+ * @returns {boolean} - true if directory was created successfully
+ */
+function createDirectoryWithFallbacks(dirPath, dirName) {
+    toastLog(`🔍 Creating ${dirName}: ${dirPath}`);
+    
+    // Check if directory already exists
+    if (files.exists(dirPath)) {
+        toastLog(`✅ ${dirName} already exists: ${dirPath}`);
+        return true;
+    }
+    
+    // Use temp file method with ensureDir (confirmed working)
+    try {
+        toastLog(`🔄 Creating ${dirName} using temp file method with ensureDir`);
+        const tempFile = files.join(dirPath, DIRECTORY_CONFIG.creation.tempFileSuffix);
+        files.ensureDir(tempFile);
+        sleep(DIRECTORY_CONFIG.creation.verificationDelay);
+        
+        // Remove the temp file if it was created
+        if (files.exists(tempFile)) {
+            files.remove(tempFile);
+            sleep(200);
+        }
+        
+        if (files.exists(dirPath)) {
+            toastLog(`✅ ${dirName} created successfully with temp file method`);
+            return true;
+        } else {
+            toastLog(`❌ Directory not found after temp file creation`);
+        }
+    } catch (error) {
+        toastLog(`❌ Temp file method failed: ${error.message}`);
+    }
+    
+    toastLog(`❌ Failed to create ${dirName}`);
+    return false;
+}
+
+/**
+ * Verifies that a directory exists and is accessible
+ * 验证目录是否存在且可访问
+ * 
+ * @param {string} dirPath - Directory path to verify
+ * @param {string} dirName - Human-readable directory name for logging
+ * @returns {boolean} - true if directory is accessible
+ */
+function verifyDirectoryAccess(dirPath, dirName) {
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < DIRECTORY_CONFIG.verification.timeout) {
+        if (files.exists(dirPath)) {
+            // Try to create a test file to verify write access
+            try {
+                const testFile = files.join(dirPath, ".test");
+                files.write(testFile, "test", "utf-8");
+                files.remove(testFile);
+                toastLog(`✅ ${dirName} verified and writable: ${dirPath}`);
+                return true;
+            } catch (error) {
+                toastLog(`❌ ${dirName} exists but not writable: ${error.message}`);
+                return false;
+            }
+        }
+        sleep(DIRECTORY_CONFIG.verification.checkInterval);
+    }
+    
+    toastLog(`❌ ${dirName} verification timeout: ${dirPath}`);
+    return false;
+}
+
+/**
+ * Creates all necessary directories for downloads
+ * 创建下载所需的所有目录
+ * 
+ * @returns {boolean} - true if all directories were created successfully
+ */
+function createDownloadDirectories() {
+    toastLog("📁 Starting directory creation process...");
+    
+    try {
+        // Create base directory first
+        if (!createDirectoryWithFallbacks(DIRECTORY_CONFIG.baseDir, "Base directory")) {
+            toastLog("❌ Failed to create base directory");
+            return false;
+        }
+        
+        // Create all subdirectories
+        const subDirResults = [];
+        
+        // Internal vault directory
+        const internalVaultDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.internalVault);
+        subDirResults.push({
+            path: internalVaultDir,
+            name: "Internal vault directory",
+            success: createDirectoryWithFallbacks(internalVaultDir, "Internal vault directory")
+        });
+        
+        // External public directory
+        const externalPublicDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.externalPublic);
+        subDirResults.push({
+            path: externalPublicDir,
+            name: "External public directory",
+            success: createDirectoryWithFallbacks(externalPublicDir, "External public directory")
+        });
+        
+        // Metadata directory
+        const metadataDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.metadata);
+        subDirResults.push({
+            path: metadataDir,
+            name: "Metadata directory",
+            success: createDirectoryWithFallbacks(metadataDir, "Metadata directory")
+        });
+        
+        // Images directory (inside internal vault)
+        const imagesDir = files.join(internalVaultDir, DIRECTORY_CONFIG.subDirs.images);
+        subDirResults.push({
+            path: imagesDir,
+            name: "Images directory",
+            success: createDirectoryWithFallbacks(imagesDir, "Images directory")
+        });
+        
+        // Markdown directory (inside internal vault)
+        const markdownDir = files.join(internalVaultDir, DIRECTORY_CONFIG.subDirs.markdown);
+        subDirResults.push({
+            path: markdownDir,
+            name: "Markdown directory",
+            success: createDirectoryWithFallbacks(markdownDir, "Markdown directory")
+        });
+        
+        // Verify all directories were created successfully
+        const failedDirs = subDirResults.filter(result => !result.success);
+        if (failedDirs.length > 0) {
+            toastLog("❌ Failed to create the following directories:");
+            failedDirs.forEach(dir => {
+                toastLog(`   - ${dir.name}: ${dir.path}`);
+            });
+            return false;
+        }
+        
+        // Final verification of all directories
+        toastLog("🔍 Final verification of all directories:");
+        const allDirs = [
+            { path: DIRECTORY_CONFIG.baseDir, name: "Base" },
+            ...subDirResults
+        ];
+        
+        let allVerified = true;
+        allDirs.forEach(dir => {
+            const verified = verifyDirectoryAccess(dir.path, dir.name);
+            toastLog(`📁 ${dir.name}: ${verified ? '✅' : '❌'} ${dir.path}`);
+            if (!verified) {
+                allVerified = false;
+            }
+        });
+        
+        if (allVerified) {
+            toastLog("✅ All directories created and verified successfully");
+            return true;
+        } else {
+            toastLog("❌ Some directories failed verification");
+            return false;
+        }
+        
+    } catch (error) {
+        toastLog(`❌ Error creating directories: ${error.message}`);
+        return false;
+    }
+}
 
 /**
  * Generates a random sleep time to avoid automation detection
@@ -116,33 +327,6 @@ function isOnUserProfilePage() {
 }
 
 /**
- * Creates necessary directories for downloads
- * 创建下载所需的目录
- */
-function createDownloadDirectories() {
-    try {
-        // Create main download directory
-        files.ensureDir(CONFIG.baseDownloadDir);
-        toastLog(`Created download directory: ${CONFIG.baseDownloadDir}`);
-        
-        // Create markdown subdirectory
-        const markdownDir = files.join(CONFIG.baseDownloadDir, CONFIG.markdownSubDir);
-        files.ensureDir(markdownDir);
-        toastLog(`Created markdown directory: ${markdownDir}`);
-        
-        // Create images subdirectory
-        const imagesDir = files.join(CONFIG.baseDownloadDir, CONFIG.imagesSubDir);
-        files.ensureDir(imagesDir);
-        toastLog(`Created images directory: ${imagesDir}`);
-        
-        return true;
-    } catch (error) {
-        toastLog(`Error creating directories: ${error.message}`);
-        return false;
-    }
-}
-
-/**
  * Loads downloaded notes metadata from file
  * 从文件加载已下载笔记的元数据
  * 
@@ -150,7 +334,8 @@ function createDownloadDirectories() {
  */
 function loadDownloadedNotes() {
     try {
-        const metadataPath = files.join(CONFIG.baseDownloadDir, CONFIG.metadataFile);
+        const metadataDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.metadata);
+        const metadataPath = files.join(metadataDir, CONFIG.metadataFile);
         if (files.exists(metadataPath)) {
             const content = files.read(metadataPath, "utf-8");
             return JSON.parse(content);
@@ -169,7 +354,8 @@ function loadDownloadedNotes() {
  */
 function saveDownloadedNotes(metadata) {
     try {
-        const metadataPath = files.join(CONFIG.baseDownloadDir, CONFIG.metadataFile);
+        const metadataDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.metadata);
+        const metadataPath = files.join(metadataDir, CONFIG.metadataFile);
         metadata.lastUpdated = new Date().toISOString();
         files.write(metadataPath, JSON.stringify(metadata, null, 2), "utf-8");
         toastLog("Metadata saved successfully");
@@ -714,14 +900,23 @@ function downloadNoteImages(noteIndex) {
  * @returns {Array} - Array of moved image objects
  */
 function moveImagesFromAppDirectory(noteIndex, imageCount) {
-    const imagesDir = files.join(CONFIG.baseDownloadDir, CONFIG.imagesSubDir);
-    files.ensureDir(imagesDir);
+    const internalVaultDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.internalVault);
+    const imagesDir = files.join(internalVaultDir, DIRECTORY_CONFIG.subDirs.images);
+    
     const movedImages = [];
+    
+    toastLog(`📁 Internal vault directory: ${internalVaultDir}`);
+    toastLog(`📁 内部保险库目录: ${internalVaultDir}`);
+    toastLog(`📁 Images directory: ${imagesDir}`);
+    toastLog(`📁 图片目录: ${imagesDir}`);
     
     try {
         // Get list of files in Pictures directory
         const pictureFiles = files.listDir(CONFIG.appImagesDir);
         const imageFiles = pictureFiles.filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
+        
+        toastLog(`📁 Found ${imageFiles.length} image files in Pictures directory`);
+        toastLog(`📁 在Pictures目录中找到 ${imageFiles.length} 个图片文件`);
         
         // Sort by filename (newer files typically have later timestamps in filename)
         // Files have format like promphoto_1754016938841.png (timestamp in milliseconds)
@@ -750,7 +945,13 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
             })
             .slice(0, imageCount); // Get the most recent images
         
-        toastLog(`Found ${recentImages.length} recent images to move`);
+        toastLog(`📁 Found ${recentImages.length} recent images to move`);
+        toastLog(`📁 找到 ${recentImages.length} 个最近的图片需要移动`);
+        
+        // Debug: Show the images that will be moved
+        recentImages.forEach((image, index) => {
+            toastLog(`📁 Image ${index + 1}: ${image}`);
+        });
         
         // Move images to organized structure with filename mapping
         // Reverse the numbering so newest file (last in gallery) becomes image_001
@@ -761,25 +962,218 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
             const newImageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(imageNumber).padStart(3, '0')}.png`;
             const destPath = files.join(imagesDir, newImageName);
             
+            toastLog(`📁 Moving: ${sourcePath} → ${destPath}`);
+            toastLog(`📁 移动: ${sourcePath} → ${destPath}`);
+            
             try {
+                // Check if source file exists
+                if (!files.exists(sourcePath)) {
+                    toastLog(`❌ Source file does not exist: ${sourcePath}`);
+                    continue;
+                }
+                
+                // Ensure destination directory exists using the new directory management system
+                if (!files.exists(imagesDir)) {
+                    const dirCreated = createDirectoryWithFallbacks(imagesDir, "Images directory");
+                    if (!dirCreated) {
+                        toastLog(`❌ Failed to create images directory`);
+                        continue;
+                    }
+                }
+                
+                // Verify directory access
+                if (!verifyDirectoryAccess(imagesDir, "Images directory")) {
+                    toastLog(`❌ Images directory not accessible`);
+                    continue;
+                }
+                
+                // Try to move the file with retry logic
+                let moveSuccess = false;
+                for (let retry = 1; retry <= 3; retry++) {
+                    try {
+                        toastLog(`🔄 Moving file (attempt ${retry}/3): ${sourcePath} → ${destPath}`);
                 files.move(sourcePath, destPath);
+                        
+                        // Verify the file was moved successfully
+                        if (files.exists(destPath)) {
                 movedImages.push({
                     originalName: recentImages[i],
                     newName: newImageName,
                     path: destPath,
                     relativePath: `images/${newImageName}`
                 });
-                toastLog(`Moved image: ${recentImages[i]} → ${newImageName}`);
+                            toastLog(`✅ Moved image: ${recentImages[i]} → ${newImageName}`);
+                            toastLog(`✅ 移动图片: ${recentImages[i]} → ${newImageName}`);
+                            moveSuccess = true;
+                            break;
+                        } else {
+                            toastLog(`❌ File was not moved successfully (attempt ${retry}/3): ${destPath}`);
+                            toastLog(`❌ Source file still exists: ${files.exists(sourcePath) ? 'Yes' : 'No'}`);
+                            toastLog(`❌ Destination file exists: ${files.exists(destPath) ? 'Yes' : 'No'}`);
+                            if (retry < 3) {
+                                sleep(1000); // Wait before retry
+                            }
+                        }
+                    } catch (moveError) {
+                        toastLog(`❌ Error moving image ${recentImages[i]} (attempt ${retry}/3): ${moveError.message}`);
+                        toastLog(`❌ Error type: ${moveError.constructor.name}`);
+                        if (retry < 3) {
+                            sleep(1000); // Wait before retry
+                        }
+                    }
+                }
+                
+                if (!moveSuccess) {
+                    toastLog(`❌ Failed to move image after 3 attempts: ${recentImages[i]}`);
+                    toastLog(`🔄 Trying copy and delete as fallback...`);
+                    
+                    try {
+                        // Try copy and delete as fallback
+                        files.copy(sourcePath, destPath);
+                        if (files.exists(destPath)) {
+                            files.remove(sourcePath);
+                            movedImages.push({
+                                originalName: recentImages[i],
+                                newName: newImageName,
+                                path: destPath,
+                                relativePath: `images/${newImageName}`
+                            });
+                            toastLog(`✅ Copied and deleted image: ${recentImages[i]} → ${newImageName}`);
+                            toastLog(`✅ 复制并删除图片: ${recentImages[i]} → ${newImageName}`);
+                        } else {
+                            toastLog(`❌ Copy operation failed: ${destPath}`);
+                        }
+                    } catch (copyError) {
+                        toastLog(`❌ Copy and delete fallback failed: ${copyError.message}`);
+                    }
+                }
             } catch (error) {
-                toastLog(`Error moving image ${recentImages[i]}: ${error.message}`);
+                toastLog(`❌ Error moving image ${recentImages[i]}: ${error.message}`);
             }
         }
         
     } catch (error) {
-        toastLog(`Error accessing Pictures directory: ${error.message}`);
+        toastLog(`❌ Error accessing Pictures directory: ${error.message}`);
     }
     
+    toastLog(`📁 Successfully moved ${movedImages.length} images to organized structure`);
+    toastLog(`📁 成功移动 ${movedImages.length} 张图片到有组织的结构中`);
+    
     return movedImages;
+}
+
+/**
+ * Uploads an image to ImgBB for external hosting
+ * 将图片上传到ImgBB进行外部托管
+ * 
+ * @param {string} imagePath - Path to the image file
+ * @param {string} imageName - Optional name for the image
+ * @returns {string|null} - ImgBB URL if successful, null if failed
+ */
+function uploadImageToImgBB(imagePath, imageName = null) {
+    if (!files.exists(imagePath)) {
+        toastLog(`❌ Image file not found: ${imagePath}`);
+        return null;
+    }
+    
+    for (let attempt = 1; attempt <= IMGBB_CONFIG.maxRetries; attempt++) {
+        try {
+            toastLog(`📤 Uploading image to ImgBB: ${imagePath} (attempt ${attempt}/${IMGBB_CONFIG.maxRetries})`);
+            const imageBytes = files.readBytes(imagePath);
+            const base64Data = android.util.Base64.encodeToString(imageBytes, android.util.Base64.DEFAULT);
+            
+            const response = http.post(IMGBB_CONFIG.uploadUrl, {
+                key: IMGBB_CONFIG.apiKey,
+                image: base64Data
+            });
+            
+            if (response.statusCode === 200) {
+                try {
+                    const result = JSON.parse(response.body.string());
+                    if (result.success && result.data && result.data.url) {
+                        toastLog(`✅ ImgBB upload successful: ${result.data.url}`);
+                        return result.data.url;
+                    } else {
+                        toastLog(`❌ ImgBB upload failed: ${result.error ? result.error.message : "Unknown error"}`);
+                    }
+                } catch (e) {
+                    toastLog(`❌ Failed to parse ImgBB response: ${e.message}`);
+                }
+            } else {
+                toastLog(`❌ ImgBB upload failed: HTTP ${response.statusCode}`);
+            }
+            
+            if (attempt < IMGBB_CONFIG.maxRetries) {
+                toastLog(`🔄 Retrying ImgBB upload (attempt ${attempt + 1}/${IMGBB_CONFIG.maxRetries})`);
+                sleep(IMGBB_CONFIG.retryDelay);
+            }
+        } catch (error) {
+            toastLog(`❌ ImgBB upload error: ${error.message}`);
+            if (attempt < IMGBB_CONFIG.maxRetries) {
+                toastLog(`🔄 Retrying ImgBB upload (attempt ${attempt + 1}/${IMGBB_CONFIG.maxRetries})`);
+                sleep(IMGBB_CONFIG.retryDelay);
+            }
+        }
+    }
+    
+    toastLog(`❌ ImgBB upload failed after ${IMGBB_CONFIG.maxRetries} attempts`);
+    return null;
+}
+
+/**
+ * Generates external markdown file with ImgBB URLs
+ * 生成带有ImgBB URL的外部markdown文件
+ * 
+ * @param {Object} noteData - Note data object
+ * @returns {string|null} - Path to generated markdown file
+ */
+function generateExternalMarkdown(noteData) {
+    try {
+        const externalPublicDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.externalPublic);
+        
+        toastLog(`✅ Using external public directory: ${externalPublicDir}`);
+        
+        const externalFilename = noteData.markdownFile.replace('.md', '_external.md');
+        const externalMarkdownPath = files.join(externalPublicDir, externalFilename);
+        
+        let markdownContent = `# ${noteData.title}\n\n`;
+        
+        // Add metadata
+        if (noteData.postingDate) {
+            markdownContent += `**Posted:** ${noteData.postingDate}\n\n`;
+        }
+        if (noteData.location) {
+            markdownContent += `**Location:** ${noteData.location}\n\n`;
+        }
+        if (noteData.restaurantName) {
+            markdownContent += `**Restaurant:** ${noteData.restaurantName}\n\n`;
+        }
+        if (noteData.viewCount) {
+            markdownContent += `**Views:** ${noteData.viewCount}\n\n`;
+        }
+        
+        // Add content
+        if (noteData.content) {
+            markdownContent += `## Content\n\n${noteData.content}\n\n`;
+        }
+        
+        // Add images with ImgBB URLs
+        if (noteData.images && noteData.images.length > 0) {
+            markdownContent += `## Images\n\n`;
+            noteData.images.forEach((image, index) => {
+                if (image.imgbbUrl) {
+                    markdownContent += `![Image ${index + 1}](${image.imgbbUrl})\n\n`;
+                }
+            });
+        }
+        
+        files.write(externalMarkdownPath, markdownContent, "utf-8");
+        toastLog(`Generated external markdown file: ${externalMarkdownPath}`);
+        return externalMarkdownPath;
+    } catch (error) {
+        toastLog(`Error generating external markdown: ${error.message}`);
+        return null;
+    }
 }
 
 /**
@@ -1068,46 +1462,60 @@ function generateContentHash(content) {
  */
 function generateMarkdownOnMobile(noteData) {
     try {
-        const markdownContent = `# ${noteData.title}
-
-**Posting Date:** ${noteData.postingDate || 'Unknown'}  
-**Location:** ${noteData.location || 'Unknown'}  
-**Views:** ${noteData.viewCount}  
-**Restaurant:** ${noteData.restaurantName || 'Unknown'}  
-**Download Date:** ${noteData.downloadDate}  
-
-## Images
-
-${noteData.images.map((img, i) => `![Image ${i+1}](${img.relativePath})`).join('\n')}
-
-## Content
-
-${noteData.content}
-
----
-
-*Downloaded by Dianping Notes Downloader v1.0*
-`;
-
-        // Ensure markdown directory exists
-        const markdownDir = files.join(CONFIG.baseDownloadDir, CONFIG.markdownSubDir);
-        files.ensureDir(markdownDir);
+        // Create internal vault markdown file
+        const internalVaultDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.internalVault);
         
-        // Use the markdown filename from noteData (which includes posting date)
-        const filename = noteData.markdownFile;
-        const filepath = files.join(markdownDir, filename);
+        // Ensure directory exists using the new directory management system
+        if (!files.exists(internalVaultDir)) {
+            const dirCreated = createDirectoryWithFallbacks(internalVaultDir, "Internal vault directory");
+            if (!dirCreated) {
+                toastLog(`❌ Failed to create internal vault directory`);
+                return null;
+            }
+        }
         
-        // Create file with directories
-        files.createWithDirs(filepath);
+        // Verify directory access
+        if (!verifyDirectoryAccess(internalVaultDir, "Internal vault directory")) {
+            toastLog(`❌ Internal vault directory not accessible`);
+            return null;
+        }
         
-        // Write content to the file
-        files.write(filepath, markdownContent, "utf-8");
+        toastLog(`✅ Internal vault directory ready: ${internalVaultDir}`);
         
-        toastLog(`Markdown file generated: ${filepath}`);
-        return filepath;
+        // Create internal markdown filename
+        const internalFilename = noteData.markdownFile.replace('.md', '_internal.md');
+        const internalMarkdownPath = files.join(internalVaultDir, internalFilename);
+        
+        let markdownContent = `# ${noteData.title}\n\n`;
+        
+        // Add metadata
+        markdownContent += `**Restaurant:** ${noteData.restaurantName}\n`;
+        markdownContent += `**Posted:** ${noteData.postingDate || 'Unknown'}\n`;
+        markdownContent += `**Location:** ${noteData.location || 'Unknown'}\n`;
+        markdownContent += `**Views:** ${noteData.viewCount || 'Unknown'}\n`;
+        markdownContent += `**Downloaded:** ${noteData.downloadDate}\n\n`;
+        
+        // Add content
+        markdownContent += `${noteData.content}\n\n`;
+        
+        // Add images with relative paths for internal vault
+        if (noteData.images && noteData.images.length > 0) {
+            markdownContent += `## Images\n\n`;
+            noteData.images.forEach((image, index) => {
+                markdownContent += `![Image ${index + 1}](${image.relativePath})\n\n`;
+            });
+        }
+        
+        files.write(internalMarkdownPath, markdownContent, "utf-8");
+        toastLog(`Generated internal markdown file: ${internalMarkdownPath}`);
+        
+        // Update noteData with internal markdown path
+        noteData.internalMarkdownPath = internalMarkdownPath;
+        
+        return internalMarkdownPath;
         
     } catch (error) {
-        toastLog(`Error generating markdown file: ${error.message}`);
+        toastLog(`Error generating internal markdown: ${error.message}`);
         return null;
     }
 }
@@ -1269,21 +1677,27 @@ function main() {
     toastLog("Starting Dianping Notes Downloader");
     toastLog("开始大众点评笔记下载器");
     
-    // Get user input for number of notes to download
-    const maxNotesToProcess = getUserInputForNoteCount();
-    
-    // Display current package name
-    toastLog(`Current package: ${currentPackage()}`);
-    
-    // Launch or ensure the app is in focus
-    if (currentPackage() !== TARGET_PACKAGE) {
-        toastLog("Launching Dianping app");
-        app.launchApp(APP_NAME);
-        dynamicSleep(3000, 5000);
-        toastLog(`Current package: ${currentPackage()}`);
-    }
-    
     try {
+        // Create all necessary directories at the beginning
+        if (!createDownloadDirectories()) {
+            toastLog("❌ Failed to create download directories");
+            return;
+        }
+        
+        // Get user input for number of notes to download
+        const maxNotesToProcess = getUserInputForNoteCount();
+        
+        // Display current package name
+        toastLog(`Current package: ${currentPackage()}`);
+        
+        // Launch or ensure the app is in focus
+        if (currentPackage() !== TARGET_PACKAGE) {
+            toastLog("Launching Dianping app");
+            app.launchApp(APP_NAME);
+            dynamicSleep(3000, 5000);
+            toastLog(`Current package: ${currentPackage()}`);
+        }
+        
         // Wait for app to load
         dynamicSleep(2000, 3500);
         
@@ -1296,12 +1710,6 @@ function main() {
         
         toastLog("✅ Successfully verified we're on the desired page!");
         toastLog("✅ 成功验证我们在目标页面上！");
-        
-        // Create download directories
-        if (!createDownloadDirectories()) {
-            toastLog("❌ Failed to create download directories");
-            return;
-        }
         
         // Navigate to notes tab
         if (!navigateToNotesTab()) {
@@ -1402,14 +1810,50 @@ function main() {
                             noteIndex: processedCount + 1
                         };
                         
-                        // Step 10: Generate markdown file
+                        // Step 10: Generate internal markdown file
                         const markdownPath = generateMarkdownOnMobile(noteData);
                         if (markdownPath) {
                             noteData.markdownPath = markdownPath;
-                            toastLog(`✅ Generated markdown file: ${markdownPath}`);
+                            toastLog(`✅ Generated internal markdown file: ${markdownPath}`);
                         }
                         
-                        // Step 11: Update metadata
+                        // Step 11: Upload images to ImgBB for external hosting
+                        toastLog("📤 Starting ImgBB upload for external hosting...");
+                        const uploadedImages = [];
+                        let uploadSuccess = true;
+                        
+                        for (let i = 0; i < movedImages.length; i++) {
+                            const image = movedImages[i];
+                            const imgbbUrl = uploadImageToImgBB(image.path, image.newName);
+                            if (imgbbUrl) {
+                                uploadedImages.push({ ...image, imgbbUrl: imgbbUrl });
+                                toastLog(`✅ Uploaded ${image.newName} to ImgBB: ${imgbbUrl}`);
+                            } else {
+                                toastLog(`❌ Failed to upload ${image.newName} to ImgBB`);
+                                uploadSuccess = false;
+                                break; // Stop processing if upload fails
+                            }
+                        }
+                        
+                        if (!uploadSuccess) {
+                            toastLog("❌ ImgBB upload failed, stopping note processing");
+                            toastLog("❌ ImgBB上传失败，停止笔记处理");
+                            // Increment processedCount to avoid endless loop when maxNotesToDownload is 1
+                            processedCount++;
+                            back();
+                            dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
+                            continue; // Move to next iteration
+                        }
+                        
+                        // Step 12: Generate external markdown with ImgBB URLs
+                        const externalMarkdownPath = generateExternalMarkdown(noteData);
+                        if (externalMarkdownPath) {
+                            noteData.externalMarkdownPath = externalMarkdownPath;
+                            toastLog(`✅ Generated external markdown file: ${externalMarkdownPath}`);
+                        }
+                        
+                        // Step 13: Update metadata with uploaded images
+                        noteData.images = uploadedImages;
                         addDownloadedNote(noteData);
                         processedCount++;
                         
@@ -1418,18 +1862,20 @@ function main() {
                         toastLog(`📊 Total notes processed: ${processedCount}/${maxNotesToProcess}`);
                         toastLog(`📊 已处理笔记总数: ${processedCount}/${maxNotesToProcess}`);
                         
-                        // Log the moved images for verification
-                        movedImages.forEach((image, index) => {
-                            toastLog(`Image ${index + 1}: ${image.originalName} → ${image.newName}`);
+                        // Log the uploaded images for verification
+                        uploadedImages.forEach((image, index) => {
+                            toastLog(`Image ${index + 1}: ${image.originalName} → ${image.newName} → ${image.imgbbUrl}`);
                         });
                         
-                        // Step 12: Go back to home page for next note
+                        // Step 14: Go back to home page for next note
                         back();
                         dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
                         
                     } else {
                         toastLog("❌ Failed to move images to organized structure");
                         toastLog("❌ 移动图片到有组织的结构失败");
+                        // Increment processedCount to avoid endless loop when maxNotesToDownload is 1
+                        processedCount++;
                         // Go back to home page even if processing failed
                         back();
                         dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
@@ -1437,6 +1883,8 @@ function main() {
                 } else {
                     toastLog("❌ Failed to download images");
                     toastLog("❌ 下载图片失败");
+                    // Increment processedCount to avoid endless loop when maxNotesToDownload is 1
+                    processedCount++;
                     // Go back to home page even if processing failed
                     back();
                     dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
@@ -1445,6 +1893,8 @@ function main() {
             } else {
                 toastLog("❌ Failed to click on note image");
                 toastLog("❌ 点击笔记图片失败");
+                // Increment processedCount to avoid endless loop when maxNotesToDownload is 1
+                processedCount++;
                 // Go back to home page even if processing failed
                 back();
                 dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);

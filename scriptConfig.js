@@ -35,7 +35,8 @@ var projects = [ //项目数组，放的是每一个要编译的项目，
     id: 11, compile: true, name: "floatView", main: "./main.js"
   },
   {
-    id: 12, compile: true, name: "dianping-download-notes", main: "./download_notes.js"
+    id: 12, compile: true, name: "dianping-download-notes", main: "./download_notes.js",
+    others: ['./test_imgbb_api.js']
   },
 
 ]
