@@ -262,27 +262,42 @@ function navigateToNotesTab() {
  */
 function extractNoteTitle() {
     try {
-        // Look for title in the lower part of the screen (note content area)
-        // The title should be the first prominent text element in the lower part
+        // Look for title at depth 29 specifically
+        // The title should be the first prominent text element at depth 29
         const textElements = className("android.widget.TextView").find();
-        let noteTitle = null;
+        const depth29TextViews = [];
         
+        // Filter textviews at depth 29
         for (let element of textElements) {
+            if (element.depth() === 29) {
+                depth29TextViews.push(element);
+            }
+        }
+        
+        toastLog(`Found ${depth29TextViews.length} textviews at depth 29`);
+        
+        // Debug: Show all depth 29 textviews
+        for (let i = 0; i < depth29TextViews.length; i++) {
+            const tv = depth29TextViews[i];
+            toastLog(`Depth 29 TextView ${i + 1}: "${tv.text()}"`);
+        }
+        
+        // Look for the first valid title at depth 29
+        for (let element of depth29TextViews) {
             const text = element.text();
-            const bounds = element.bounds();
             
-            // Check if element is in the lower part of the screen (below middle)
-            if (bounds.top > device.height * 0.3 && text && text.length > 5 && text.length < 100) {
+            // Check if text is valid for a title
+            if (text && text.length > 5 && text.length < 100) {
                 // Skip user nickname and other UI elements
                 if (!text.includes('尘世中的小吃货') && !text.includes('◎') && !text.includes('#')) {
-                    noteTitle = text.trim();
-                    toastLog(`Extracted note title: ${noteTitle}`);
+                    const noteTitle = text.trim();
+                    toastLog(`Extracted note title at depth 29: ${noteTitle}`);
                     return noteTitle;
                 }
             }
         }
         
-        toastLog("No note title found in lower part of screen");
+        toastLog("No note title found at depth 29");
         return null;
     } catch (error) {
         toastLog(`Error extracting note title: ${error.message}`);
@@ -1041,68 +1056,7 @@ ${noteData.content}
     }
 }
 
-/**
- * Processes a single note (downloads images, extracts content, generates markdown)
- * 处理单个笔记（下载图片、提取内容、生成markdown）
- * 
- * @param {number} noteIndex - Note index
- * @returns {boolean} - true if successful
- */
-function processNote(noteIndex) {
-    toastLog(`Processing note ${noteIndex}`);
-    
-    // Extract note title first
-    const noteTitle = extractNoteTitle();
-    if (!noteTitle) {
-        toastLog("Could not extract note title, skipping");
-        return false;
-    }
-    
-    // Check if already downloaded
-    if (isNoteDownloaded(noteTitle)) {
-        toastLog(`Note already downloaded: ${noteTitle}`);
-        return false;
-    }
-    
-    // Download images
-    const { imageCount, imagePaths } = downloadNoteImages(noteIndex);
-    
-    // Move images to organized structure
-    const movedImages = moveImagesFromAppDirectory(noteIndex, imageCount);
-    
-    // Extract text content
-    const noteContent = extractNoteContent();
-    
-    // Extract view count
-    const viewCount = extractViewCount();
-    
-    // Extract restaurant information
-    const restaurantName = extractRestaurantInformation();
-    
-    // Generate markdown
-    const noteData = {
-        title: noteTitle,
-        timestamp: new Date().toISOString(),
-        viewCount: viewCount,
-        restaurantName: restaurantName || "Unknown",
-        imageCount: imageCount,
-        markdownFile: `note_${String(noteIndex).padStart(3, '0')}_${Date.now()}.md`,
-        imagePrefix: `note_${String(noteIndex).padStart(3, '0')}`,
-        contentHash: generateContentHash(noteContent),
-        downloadDate: new Date().toISOString(),
-        images: movedImages,
-        content: noteContent,
-        noteIndex: noteIndex
-    };
-    
-    const markdownPath = generateMarkdownOnMobile(noteData);
-    
-    // Update metadata
-    addDownloadedNote(noteData);
-    
-    toastLog(`Successfully processed note: ${noteTitle}`);
-    return true;
-}
+
 
 /**
  * Test function for Step 8: Extract Restaurant Information

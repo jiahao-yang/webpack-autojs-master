@@ -43,8 +43,15 @@ click(element.bounds().centerX(), element.bounds().centerY());
 
 ### 3.2 Element Selection Strategy (元素选择策略)
 1. **Primary**: Use specific selectors (`desc()`, `text()`, `className()`)
-2. **Fallback**: Try alternative selectors if primary fails
-3. **Position**: Always use `bounds().centerX()` and `bounds().centerY()`
+2. **Depth-based**: Target specific UI hierarchy depths for accurate extraction
+3. **Fallback**: Try alternative selectors if primary fails
+4. **Position**: Always use `bounds().centerX()` and `bounds().centerY()`
+
+**Depth-Based Targeting**:
+- **Note titles**: Target depth 29 for accurate title extraction
+- **Date/location**: Target depth 19 for posting date and location
+- **Restaurant info**: Target depth 23 for restaurant name
+- **Debug logging**: Show all elements at target depths for troubleshooting
 
 ### 3.3 Error Handling (错误处理)
 - Always check if element exists before clicking
@@ -508,7 +515,7 @@ function findAndClickMenuButton() {
 
 ## 8. UI Elements (UI元素)
 
-Based on screenshots:
+Based on screenshots and UI hierarchy analysis:
 
 ```javascript
 const UI_ELEMENTS = {
@@ -532,7 +539,8 @@ const UI_ELEMENTS = {
         backButton: [30, 146, 150, 266]   // "<" bounds (back button - NOT for menu)
     },
     
-    // Note content
+    // Note content - DEPTH-BASED extraction
+    noteTitleDepth: 29, // Target depth for note title extraction
     noteTitle: /^[^#\n]+🔥?$/,
     hashtags: /#[^\s]+/g,
     viewCount: /◎浏览\d+/,
@@ -541,7 +549,17 @@ const UI_ELEMENTS = {
     // Restaurant (POSITION-BASED extraction)
     merchantDetailsHeader: "商户详情",
     restaurantRating: /\d+\.\d+分/,
-    restaurantAddress: /[^\n]+区[^\n]+号/
+    restaurantAddress: /[^\n]+区[^\n]+号/,
+    
+    // Date and location extraction
+    dateLocationDepth: 19, // Target depth for date/location elements
+    datePatterns: [
+        /^(\d{2})-(\d{2})$/,           // MM-DD format
+        /^(\d{4})-(\d{2})-(\d{2})$/,   // YYYY-MM-DD format
+        /^(\d+)(小时前|天前|分钟前|星期前)$/, // Chinese relative formats
+        /^昨天\s+(\d{2}):(\d{2})$/,     // Yesterday format
+        /^前天\s+(\d{2}):(\d{2})$/      // Day before yesterday format
+    ]
 };
 ```
 
@@ -563,51 +581,17 @@ const UI_ELEMENTS = {
 5. **Save metadata** - Persist progress
 
 ### 9.2 Note Processing (笔记处理)
+**Note**: The note processing logic is implemented inline within the main function for better flow control and error handling. 
+
 ```javascript
-function processNote(noteIndex) {
-    // Extract note title first
-    const noteTitle = extractNoteTitle();
-    
-    // Check if already downloaded
-    if (isNoteDownloaded(noteTitle)) {
-        toastLog(`Note already downloaded: ${noteTitle}`);
-        return false;
-    }
-    
-    // Download images
-    const { imageCount, imagePaths } = downloadNoteImages(noteIndex);
-    
-    // Move images to organized structure
-    const movedImages = moveImagesFromAppDirectory(noteIndex, imageCount);
-    
-    // Extract text content
-    const noteContent = extractNoteContent();
-    
-    // Extract restaurant info
-    const restaurantInfo = extractRestaurantDetails();
-    
-    // Generate markdown
-    const noteData = {
-        title: noteTitle,
-        timestamp: new Date().toISOString(),
-        viewCount: extractViewCount(),
-        restaurantName: restaurantInfo.name,
-        imageCount: imageCount,
-        markdownFile: `note_${postingDate}_${String(noteIndex).padStart(3, '0')}_${Date.now()}.md`,
-        imagePrefix: `note_${String(noteIndex).padStart(3, '0')}`,
-        contentHash: generateContentHash(noteContent),
-        downloadDate: new Date().toISOString(),
-        images: movedImages
-    };
-    
-    const markdownPath = generateMarkdownOnMobile(noteData);
-    
-    // Update metadata
-    addDownloadedNote(noteData);
-    
-    toastLog(`Successfully processed note: ${noteTitle}`);
-    return true;
-}
+// Note processing is handled inline in main() function:
+// 1. Extract note title using depth 29 targeting
+// 2. Check for duplicates by title
+// 3. Download images with pagination
+// 4. Move images to organized structure
+// 5. Extract text content and metadata
+// 6. Generate markdown files
+// 7. Update metadata and continue to next note
 ```
 
 ## 10. File Generation on Mobile (移动端文件生成)
@@ -828,6 +812,11 @@ function resumeFromMetadata() {
   - Easy to match with images
   - Clear separation between internal and external versions
 
+### 17.3 Code Structure Improvements (代码结构改进)
+- **Inline processing in main()**: Better flow control and error handling
+- **Depth-based targeting**: More accurate UI element selection
+- **Enhanced debugging**: Better logging for troubleshooting
+
 ---
 
 ## 18. Workflow Implementation (工作流程实现)
@@ -855,9 +844,11 @@ Based on Requirements.md, here's how we implement each step:
 **Requirement**: Capture the note title (e.g., "1987年炭火鸡! 派潭第一鸡名不虚传🔥")
 **Implementation**:
 - Use `extractNoteTitle()` function
-- Search for text elements in lower part of screen (below 30% height)
+- **Target depth 29 specifically** for accurate title extraction
+- Filter TextView elements at depth 29 in UI hierarchy
 - Filter out user nickname ("尘世中的小吃货"), view counts ("◎"), hashtags ("#")
 - Return first valid title found
+- **Debug logging**: Show all TextView elements at depth 29 for troubleshooting
 
 #### Step 4: Click Image to Open Gallery
 **Requirement**: Click the picture to show the full image (as shown in screenshots/note-page.jpg).
