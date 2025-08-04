@@ -79,7 +79,6 @@ const DIRECTORY_CONFIG = {
         internalVault: "internal_vault/",
         externalPublic: "external_public/",
         images: "images/",
-        markdown: "markdown/",
         metadata: "metadata/"
     },
     
@@ -225,13 +224,7 @@ function createDownloadDirectories() {
             success: createDirectoryWithFallbacks(imagesDir, "Images directory")
         });
         
-        // Markdown directory (inside internal vault)
-        const markdownDir = files.join(internalVaultDir, DIRECTORY_CONFIG.subDirs.markdown);
-        subDirResults.push({
-            path: markdownDir,
-            name: "Markdown directory",
-            success: createDirectoryWithFallbacks(markdownDir, "Markdown directory")
-        });
+
         
         // Verify all directories were created successfully
         const failedDirs = subDirResults.filter(result => !result.success);
@@ -462,11 +455,7 @@ function extractNoteTitle() {
         
         toastLog(`Found ${depth29TextViews.length} textviews at depth 29`);
         
-        // Debug: Show all depth 29 textviews
-        for (let i = 0; i < depth29TextViews.length; i++) {
-            const tv = depth29TextViews[i];
-            toastLog(`Depth 29 TextView ${i + 1}: "${tv.text()}"`);
-        }
+
         
         // Look for the first valid title at depth 29
         for (let element of depth29TextViews) {
@@ -948,10 +937,7 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
         toastLog(`📁 Found ${recentImages.length} recent images to move`);
         toastLog(`📁 找到 ${recentImages.length} 个最近的图片需要移动`);
         
-        // Debug: Show the images that will be moved
-        recentImages.forEach((image, index) => {
-            toastLog(`📁 Image ${index + 1}: ${image}`);
-        });
+
         
         // Move images to organized structure with filename mapping
         // Reverse the numbering so newest file (last in gallery) becomes image_001
@@ -1522,59 +1508,7 @@ function generateMarkdownOnMobile(noteData) {
 
 
 
-/**
- * Test function for Step 8: Extract Restaurant Information
- * 测试函数：提取餐厅信息
- * 
- * Extracts restaurant name from the 2nd textview at depth 23 on the note page
- * 从笔记页面的深度23的第2个文本视图中提取餐厅名称
- * 
- * @returns {string|null} - Restaurant name or null if not found
- */
-function testExtractRestaurantInformation() {
-    toastLog("🔍 Testing restaurant information extraction...");
-    
-    try {
-        // Wait for page to load
-        dynamicSleep(2000, 3000);
-        
-        // Look for textview elements at depth 23
-        const textViews = className("android.widget.TextView").find();
-        const depth23TextViews = [];
-        
-        // Filter textviews at depth 23
-        for (let tv of textViews) {
-            if (tv.depth() === 23) {
-                depth23TextViews.push(tv);
-            }
-        }
-        
-        toastLog(`Found ${depth23TextViews.length} textviews at depth 23`);
-        
-        // Get the 2nd textview at depth 23 (index 1)
-        if (depth23TextViews.length >= 2) {
-            const restaurantTextView = depth23TextViews[1]; // 2nd element (index 1)
-            const restaurantName = restaurantTextView.text().trim();
-            
-            toastLog(`✅ Restaurant name extracted: "${restaurantName}"`);
-            return restaurantName;
-        } else {
-            toastLog(`❌ Not enough textviews at depth 23. Found: ${depth23TextViews.length}`);
-            
-            // Debug: Show all textviews at depth 23
-            for (let i = 0; i < depth23TextViews.length; i++) {
-                const tv = depth23TextViews[i];
-                toastLog(`Depth 23 TextView ${i + 1}: "${tv.text()}"`);
-            }
-            
-            return null;
-        }
-        
-    } catch (error) {
-        toastLog(`❌ Error extracting restaurant information: ${error.message}`);
-        return null;
-    }
-}
+
 
 /**
  * Extract restaurant information from note page
@@ -1609,11 +1543,7 @@ function extractRestaurantInformation() {
         
         toastLog(`Found ${depth23TextViews.length} textviews at depth 23`);
         
-        // Debug: Show all depth 23 textviews
-        for (let i = 0; i < depth23TextViews.length; i++) {
-            const tv = depth23TextViews[i];
-            toastLog(`Depth 23 TextView ${i + 1}: "${tv.text()}"`);
-        }
+
         
         // Get the 2nd textview at depth 23 (index 1)
         if (depth23TextViews.length >= 2) {
@@ -1912,5 +1842,4 @@ function main() {
 
 // Entry point
 auto.waitFor();
-main(); // Switch back to main implementation
-// main(); // Comment out main function for now
+main();
