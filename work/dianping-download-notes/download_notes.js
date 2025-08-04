@@ -368,6 +368,62 @@ function clickNoteImage() {
 }
 
 /**
+ * Scrolls to find the next undownloaded note on home page
+ * 滚动查找下一个未下载的笔记
+ * 
+ * @returns {boolean} - true if found undownloaded note, false if no more notes
+ */
+function scrollToNextUndownloadedNote() {
+    try {
+        const maxScrollAttempts = 10; // Prevent infinite scrolling
+        let scrollAttempts = 0;
+        
+        while (scrollAttempts < maxScrollAttempts) {
+            scrollAttempts++;
+            toastLog(`Scroll attempt ${scrollAttempts}/${maxScrollAttempts} to find undownloaded note`);
+            
+            // Scroll down to reveal more notes
+            const screenHeight = device.height;
+            swipe(device.width / 2, screenHeight * 0.8, device.width / 2, screenHeight * 0.2, 500);
+            dynamicSleep(CONFIG.scrollDelay, CONFIG.scrollDelay + 1000);
+            
+            // Wait for new content to load
+            dynamicSleep(1000, 2000);
+            
+            // Check if we can find any note titles after scrolling
+            const noteTitle = extractNoteTitle();
+            if (noteTitle) {
+                // Check if this note is already downloaded
+                if (!isNoteDownloaded(noteTitle)) {
+                    toastLog(`✅ Found undownloaded note: ${noteTitle}`);
+                    return true;
+                } else {
+                    toastLog(`Found downloaded note: ${noteTitle}, continuing to scroll...`);
+                    // Continue scrolling to find next note
+                }
+            } else {
+                toastLog("No note titles found after scroll, may have reached end");
+                // Check if we're at the bottom by looking for end-of-list indicators
+                const endOfList = text("没有更多内容").findOne(2000) || 
+                                 text("已显示全部").findOne(2000) ||
+                                 text("到底了").findOne(2000);
+                if (endOfList) {
+                    toastLog("Reached end of notes list");
+                    return false;
+                }
+            }
+        }
+        
+        toastLog(`Reached maximum scroll attempts (${maxScrollAttempts})`);
+        return false;
+        
+    } catch (error) {
+        toastLog(`Error scrolling to next undownloaded note: ${error.message}`);
+        return false;
+    }
+}
+
+/**
  * Clicks on the first note to navigate to note page
  * 点击第一个笔记导航到笔记页面
  * 
@@ -1264,7 +1320,7 @@ function main() {
             toastLog(`\n🔄 Processing note ${processedCount + 1}/${maxNotesToProcess}`);
             toastLog(`🔄 处理笔记 ${processedCount + 1}/${maxNotesToProcess}`);
             
-            // Extract note title first
+            // Step 1: Extract note title from home page
             const noteTitle = extractNoteTitle();
             if (!noteTitle) {
                 toastLog("Could not extract note title, skipping");
@@ -1273,28 +1329,38 @@ function main() {
             
             toastLog(`✅ Successfully extracted note title: ${noteTitle}`);
             
-            // Check if note is already downloaded
+            // Step 2: Check if note is already downloaded
             if (isNoteDownloaded(noteTitle)) {
                 toastLog(`⚠️ Note already downloaded: ${noteTitle}`);
                 toastLog(`⚠️ 笔记已下载: ${noteTitle}`);
                 
-                // Try to click on next note
-                const nextNoteClick = clickFirstNote();
-                if (!nextNoteClick) {
-                    toastLog("❌ No more notes available");
+                // Step 2.5: Scroll to find next undownloaded note
+                const scrollSuccess = scrollToNextUndownloadedNote();
+                if (!scrollSuccess) {
+                    toastLog("❌ No more undownloaded notes available");
                     break;
                 }
                 continue;
             }
             
-            // Step 3: Click on image in note page to open gallery
+            // Step 3: Navigate to note page for processing
+            const noteClickSuccess = clickFirstNote();
+            if (!noteClickSuccess) {
+                toastLog("❌ Failed to navigate to note page");
+                break;
+            }
+            
+            // Wait for page transition
+            dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
+            
+            // Step 4: Click on image in note page to open gallery
             const imageClickSuccess = clickNoteImage();
             
             if (imageClickSuccess) {
                 toastLog("✅ Successfully clicked on note image!");
                 toastLog("✅ 成功点击笔记图片！");
                 
-                // Step 4: Download images with pagination
+                // Step 5: Download images with pagination
                 toastLog("Starting image download process...");
                 const imageResult = downloadNoteImages(processedCount + 1); // Use processed count + 1 for note index
                 
@@ -1302,7 +1368,7 @@ function main() {
                     toastLog(`✅ Successfully downloaded ${imageResult.imageCount} images!`);
                     toastLog(`✅ 成功下载 ${imageResult.imageCount} 张图片！`);
                     
-                    // Step 5: Move images from app directory to organized structure
+                    // Step 6: Move images from app directory to organized structure
                     toastLog("Moving images to organized structure...");
                     const movedImages = moveImagesFromAppDirectory(processedCount + 1, imageResult.imageCount);
                     
@@ -1310,15 +1376,15 @@ function main() {
                         toastLog(`✅ Successfully moved ${movedImages.length} images to organized structure!`);
                         toastLog(`✅ 成功移动 ${movedImages.length} 张图片到有组织的结构中！`);
                         
-                        // Step 6: Extract additional note data
+                        // Step 7: Extract additional note data
                         const noteContent = extractNoteContent();
                         const viewCount = extractViewCount();
                         const { postingDate, location } = extractNoteDateAndLocation();
                         
-                        // Step 7: Extract restaurant information (after scrolling from date/location extraction)
+                        // Step 8: Extract restaurant information (after scrolling from date/location extraction)
                         const restaurantName = extractRestaurantInformation();
                         
-                        // Step 8: Create note data object for metadata
+                        // Step 9: Create note data object for metadata
                         const noteData = {
                             title: noteTitle,
                             timestamp: new Date().toISOString(),
@@ -1336,14 +1402,14 @@ function main() {
                             noteIndex: processedCount + 1
                         };
                         
-                        // Step 9: Generate markdown file
+                        // Step 10: Generate markdown file
                         const markdownPath = generateMarkdownOnMobile(noteData);
                         if (markdownPath) {
                             noteData.markdownPath = markdownPath;
                             toastLog(`✅ Generated markdown file: ${markdownPath}`);
                         }
                         
-                        // Step 10: Update metadata
+                        // Step 11: Update metadata
                         addDownloadedNote(noteData);
                         processedCount++;
                         
@@ -1357,26 +1423,31 @@ function main() {
                             toastLog(`Image ${index + 1}: ${image.originalName} → ${image.newName}`);
                         });
                         
-                        // Go back to notes list for next note
+                        // Step 12: Go back to home page for next note
                         back();
-                        dynamicSleep(2000, 3000);
+                        dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
                         
                     } else {
                         toastLog("❌ Failed to move images to organized structure");
                         toastLog("❌ 移动图片到有组织的结构失败");
+                        // Go back to home page even if processing failed
+                        back();
+                        dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
                     }
                 } else {
                     toastLog("❌ Failed to download images");
                     toastLog("❌ 下载图片失败");
+                    // Go back to home page even if processing failed
+                    back();
+                    dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
                 }
-                
-                // Go back to notes list
-                back();
-                dynamicSleep(2000, 3000);
                 
             } else {
                 toastLog("❌ Failed to click on note image");
                 toastLog("❌ 点击笔记图片失败");
+                // Go back to home page even if processing failed
+                back();
+                dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
             }
         }
         

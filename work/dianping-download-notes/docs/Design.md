@@ -585,13 +585,16 @@ const UI_ELEMENTS = {
 
 ```javascript
 // Note processing is handled inline in main() function:
-// 1. Extract note title using depth 29 targeting
+// 1. Extract note title from home page using depth 29 targeting
 // 2. Check for duplicates by title
-// 3. Download images with pagination
-// 4. Move images to organized structure
-// 5. Extract text content and metadata
-// 6. Generate markdown files
-// 7. Update metadata and continue to next note
+// 3. If downloaded: Scroll to find next undownloaded note
+// 4. If not downloaded: Navigate to note page
+// 5. Download images with pagination
+// 6. Move images to organized structure
+// 7. Extract text content and metadata
+// 8. Generate markdown files
+// 9. Update metadata
+// 10. Return to home page for next iteration
 ```
 
 ## 10. File Generation on Mobile (移动端文件生成)
@@ -816,6 +819,9 @@ function resumeFromMetadata() {
 - **Inline processing in main()**: Better flow control and error handling
 - **Depth-based targeting**: More accurate UI element selection
 - **Enhanced debugging**: Better logging for troubleshooting
+- **Correct navigation flow**: Extract titles from home page, navigate only when needed
+- **Smart scrolling**: Added `scrollToNextUndownloadedNote()` for efficient note discovery
+- **Proper error handling**: Always return to home page after processing (success or failure)
 
 ---
 
@@ -840,8 +846,8 @@ Based on Requirements.md, here's how we implement each step:
 - Use position-based clicking to navigate to note page
 - Wait for page transition with navigation delay
 
-#### Step 3: Extract Note Title
-**Requirement**: Capture the note title (e.g., "1987年炭火鸡! 派潭第一鸡名不虚传🔥")
+#### Step 1: Extract Note Title from Home Page
+**Requirement**: Capture the note title from home page (e.g., "1987年炭火鸡! 派潭第一鸡名不虚传🔥")
 **Implementation**:
 - Use `extractNoteTitle()` function
 - **Target depth 29 specifically** for accurate title extraction
@@ -849,6 +855,31 @@ Based on Requirements.md, here's how we implement each step:
 - Filter out user nickname ("尘世中的小吃货"), view counts ("◎"), hashtags ("#")
 - Return first valid title found
 - **Debug logging**: Show all TextView elements at depth 29 for troubleshooting
+
+#### Step 2: Check if Note Already Downloaded
+**Requirement**: Avoid duplicate downloads by checking metadata
+**Implementation**:
+- Use `isNoteDownloaded(noteTitle)` function
+- Check against existing metadata by title
+- If downloaded: Scroll to find next undownloaded note
+- If not downloaded: Proceed to note page for processing
+
+#### Step 2.5: Scroll to Next Undownloaded Note
+**Requirement**: Scroll through notes list to find undownloaded notes
+**Implementation**:
+- Use `scrollToNextUndownloadedNote()` function
+- Scroll down to reveal more notes (max 10 attempts)
+- Check each revealed note title against metadata
+- Continue scrolling until undownloaded note found
+- Handle end-of-list detection ("没有更多内容", "已显示全部", "到底了")
+
+#### Step 3: Navigate to Note Page
+**Requirement**: Click on note to navigate to individual note page
+**Implementation**:
+- Use `clickFirstNote()` function
+- Find clickable note elements with `desc("reculike_main_image")`
+- Use position-based clicking for reliable navigation
+- Wait for page transition with navigation delay
 
 #### Step 4: Click Image to Open Gallery
 **Requirement**: Click the picture to show the full image (as shown in screenshots/note-page.jpg).
@@ -878,6 +909,14 @@ downloadNoteImages(noteIndex):
   - Exit gallery with back() function
 ```
 **Status**: ✅ Implemented and tested with dynamic sleep and enhanced swipe functionality
+
+#### Step 12: Return to Home Page
+**Requirement**: Go back to home page after processing note (success or failure)
+**Implementation**:
+- Use `back()` function to return to home page
+- Add navigation delay for page transition
+- Ensure we're back on home page for next iteration
+- Handle both success and failure cases with proper cleanup
 
 #### Step 6: Move Images from App Directory
 **Requirement**: Images are saved to `/Pictures` directory, need to move to organized structure.
