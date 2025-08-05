@@ -1,4 +1,17 @@
 
+# KISS Principle (Keep It Simple and Stupid 简单至上原则)
+- Always prefer simple, clear solutions over complex ones.
+- Avoid unnecessary abstractions, overengineering, or premature optimization.
+- Write code and docs that are easy to read, understand, and maintain.
+- Use straightforward logic and naming; minimize clever tricks.
+- If a simple approach works, choose it—even if it seems "too easy".
+
+# Don't rush into code implementation (不要急于编码实现)
+- Design discussions should come before code implementation, especially when there are multiple possible approaches. Start coding after my confirmation.
+- Only proceed to code for simple enhancements or clear bug fixes without design ambiguity.
+- For complex features or architectural changes, compare options and confirm direction before coding.
+- This ensures thoughtful, maintainable solutions and avoids unnecessary rework.
+
 # Update Design.md timely
 
 - After any major updates or important code changes, always update the `Design.md` file as soon as possible. But please keep the file nice and concise without redudant details, especially code snippets.

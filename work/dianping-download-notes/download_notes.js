@@ -481,43 +481,6 @@ function extractNoteTitle() {
 }
 
 /**
- * Clicks on the first image to open gallery
- * 点击第一张图片打开图库
- * 
- * @returns {boolean} - true if successful
- */
-function clickFirstImage() {
-    try {
-        // Look for elements with desc = 'reculike_main_image'
-        const imageElements = desc("reculike_main_image").find();
-        if (imageElements.length > 0) {
-            const firstImage = imageElements[0];
-            // Use position-based clicking like in cancel_follows.js
-            click(firstImage.bounds().centerX(), firstImage.bounds().centerY());
-            dynamicSleep(CONFIG.imageDownloadDelay, CONFIG.imageDownloadDelay + 1000);
-            toastLog("Clicked on first image using position-based click");
-            return true;
-        }
-        
-        // Fallback: try to find image elements with different selectors
-        const fallbackElements = className("android.widget.ImageView").find();
-        if (fallbackElements.length > 0) {
-            const firstElement = fallbackElements[0];
-            click(firstElement.bounds().centerX(), firstElement.bounds().centerY());
-            dynamicSleep(CONFIG.imageDownloadDelay, CONFIG.imageDownloadDelay + 1000);
-            toastLog("Clicked on first image using fallback method");
-            return true;
-        }
-        
-        toastLog("No image elements found to click");
-        return false;
-    } catch (error) {
-        toastLog(`Error clicking first image: ${error.message}`);
-        return false;
-    }
-}
-
-/**
  * Clicks on the image in note page to open gallery
  * 在笔记页面点击图片打开图库
  * 
@@ -548,14 +511,93 @@ function clickNoteImage() {
  * 
  * @returns {boolean} - true if found undownloaded note, false if no more notes
  */
-function scrollToNextUndownloadedNote() {
+/**
+ * Finds the next undownloaded note from all visible notes at depth 29
+ * 从深度29的所有可见笔记中找到下一个未下载的笔记
+ * 
+ * @returns {Object|null} - Object with title and index, or null if none found
+ */
+function findNextUndownloadedNote() {
+    try {
+        // Extract all note titles at depth 29
+        const textElements = className("android.widget.TextView").find();
+        const depth29TextViews = [];
+        
+        // Filter textviews at depth 29
+        for (let element of textElements) {
+            if (element.depth() === 29) {
+                depth29TextViews.push(element);
+            }
+        }
+        
+        toastLog(`Found ${depth29TextViews.length} textviews at depth 29`);
+        
+        // Also get clickable elements at depth 28 for safety verification
+        const noteElements = desc("reculike_main_image").find();
+        const depth28NoteElements = [];
+        
+        // Filter elements at depth 28 only for safety
+        for (let element of noteElements) {
+            if (element.depth() === 28) {
+                depth28NoteElements.push(element);
+            }
+        }
+        
+        toastLog(`Found ${depth28NoteElements.length} note elements at depth 28`);
+        
+        // Verify we have matching counts for safety - CRITICAL ERROR
+        if (depth29TextViews.length !== depth28NoteElements.length) {
+            toastLog(`❌ CRITICAL ERROR: Mismatch between depth 29 titles (${depth29TextViews.length}) and depth 28 elements (${depth28NoteElements.length})`);
+            toastLog(`❌ This indicates a serious UI structure problem that could cause wrong element clicking`);
+            toastLog(`❌ Stopping program for safety`);
+            throw new Error(`UI structure mismatch: depth 29 titles (${depth29TextViews.length}) vs depth 28 elements (${depth28NoteElements.length})`);
+        }
+        
+        // Check each visible note title against metadata
+        for (let i = 0; i < depth29TextViews.length; i++) {
+            const element = depth29TextViews[i];
+            const text = element.text();
+            
+            // Check if text is valid for a title
+            if (text && text.length > 5 && text.length < 100) {
+                // Skip user nickname and other UI elements
+                if (!text.includes('尘世中的小吃货') && !text.includes('◎') && !text.includes('#')) {
+                    const noteTitle = text.trim();
+                    
+                    // Check if this note is already downloaded
+                    if (!isNoteDownloaded(noteTitle)) {
+                        toastLog(`✅ Found undownloaded note at index ${i}: ${noteTitle}`);
+                        return { title: noteTitle, index: i };
+                    } else {
+                        toastLog(`Found downloaded note at index ${i}: ${noteTitle}`);
+                    }
+                }
+            }
+        }
+        
+        toastLog("No undownloaded notes found on current screen");
+        return null;
+        
+    } catch (error) {
+        toastLog(`Error finding next undownloaded note: ${error.message}`);
+        return null;
+    }
+}
+
+/**
+ * Scrolls to reveal more notes when all visible notes are downloaded
+ * 当所有可见笔记都已下载时，滚动以显示更多笔记
+ * 
+ * @returns {boolean} - true if more notes revealed, false if end reached
+ */
+function scrollToRevealMoreNotes() {
     try {
         const maxScrollAttempts = 10; // Prevent infinite scrolling
         let scrollAttempts = 0;
         
         while (scrollAttempts < maxScrollAttempts) {
             scrollAttempts++;
-            toastLog(`Scroll attempt ${scrollAttempts}/${maxScrollAttempts} to find undownloaded note`);
+            toastLog(`Scroll attempt ${scrollAttempts}/${maxScrollAttempts} to reveal more notes`);
             
             // Scroll down to reveal more notes
             const screenHeight = device.height;
@@ -568,14 +610,8 @@ function scrollToNextUndownloadedNote() {
             // Check if we can find any note titles after scrolling
             const noteTitle = extractNoteTitle();
             if (noteTitle) {
-                // Check if this note is already downloaded
-                if (!isNoteDownloaded(noteTitle)) {
-                    toastLog(`✅ Found undownloaded note: ${noteTitle}`);
-                    return true;
-                } else {
-                    toastLog(`Found downloaded note: ${noteTitle}, continuing to scroll...`);
-                    // Continue scrolling to find next note
-                }
+                toastLog(`✅ Found new notes after scroll: ${noteTitle}`);
+                return true;
             } else {
                 toastLog("No note titles found after scroll, may have reached end");
                 // Check if we're at the bottom by looking for end-of-list indicators
@@ -593,7 +629,7 @@ function scrollToNextUndownloadedNote() {
         return false;
         
     } catch (error) {
-        toastLog(`Error scrolling to next undownloaded note: ${error.message}`);
+        toastLog(`Error scrolling to reveal more notes: ${error.message}`);
         return false;
     }
 }
@@ -604,32 +640,56 @@ function scrollToNextUndownloadedNote() {
  * 
  * @returns {boolean} - true if successful
  */
-function clickFirstNote() {
+/**
+ * Clicks on a specific note by index with depth 28 safety check
+ * 点击指定索引的笔记，带深度28安全检查
+ * 
+ * @param {number} noteIndex - Index of the note to click
+ * @returns {boolean} - true if successful
+ */
+function clickNoteByIndex(noteIndex) {
     try {
-        // Look for clickable note elements on home page
+        // Look for clickable note elements on home page with depth 28 safety check
         const noteElements = desc("reculike_main_image").find();
-        if (noteElements.length > 0) {
-            const firstNote = noteElements[0];
-            click(firstNote.bounds().centerX(), firstNote.bounds().centerY());
-            dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
-            toastLog("Clicked on first note to navigate to note page");
-            return true;
+        const depth28NoteElements = [];
+        
+        // Filter elements at depth 28 only for safety
+        for (let element of noteElements) {
+            if (element.depth() === 28) {
+                depth28NoteElements.push(element);
+            }
         }
         
-        // Fallback: try to find any clickable area
-        const clickableElements = className("android.widget.ImageView").find();
-        if (clickableElements.length > 0) {
-            const firstElement = clickableElements[0];
-            click(firstElement.bounds().centerX(), firstElement.bounds().centerY());
-            dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
-            toastLog("Clicked on first note using fallback method");
-            return true;
+        toastLog(`Found ${depth28NoteElements.length} note elements at depth 28`);
+        
+        if (depth28NoteElements.length > 0) {
+            // Check if the requested index is valid
+            if (noteIndex >= 0 && noteIndex < depth28NoteElements.length) {
+                const targetNote = depth28NoteElements[noteIndex];
+                
+                // Additional safety check: verify this is actually a note element
+                const elementDesc = targetNote.desc();
+                if (elementDesc !== "reculike_main_image") {
+                    toastLog(`❌ CRITICAL ERROR: Element at index ${noteIndex} is not a note image (desc: ${elementDesc})`);
+                    toastLog(`❌ Stopping program for safety`);
+                    throw new Error(`Invalid element type at index ${noteIndex}: expected "reculike_main_image", got "${elementDesc}"`);
+                }
+                
+                click(targetNote.bounds().centerX(), targetNote.bounds().centerY());
+                dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
+                toastLog(`Clicked on note at index ${noteIndex} (depth 28) to navigate to note page`);
+                return true;
+            } else {
+                toastLog(`❌ CRITICAL ERROR: Invalid note index: ${noteIndex}. Available notes at depth 28: ${depth28NoteElements.length}`);
+                toastLog(`❌ Stopping program for safety`);
+                throw new Error(`Invalid note index: ${noteIndex}, available: ${depth28NoteElements.length}`);
+            }
         }
         
-        toastLog("No note elements found to click");
+        toastLog("No note elements found at depth 28 to click");
         return false;
     } catch (error) {
-        toastLog(`Error clicking first note: ${error.message}`);
+        toastLog(`Error clicking note at index ${noteIndex}: ${error.message}`);
         return false;
     }
 }
@@ -730,7 +790,7 @@ function findAndClickMenuButton() {
  * @param {number} imageNumber - Image number in sequence
  * @returns {string|null} - Image filename or null if failed
  */
-function downloadCurrentImage(noteIndex, imageNumber) {
+function downloadCurrentImageTemp(timestamp, imageNumber) {
     try {
         // Find and click the menu button using multiple strategies
         if (!findAndClickMenuButton()) {
@@ -747,15 +807,16 @@ function downloadCurrentImage(noteIndex, imageNumber) {
         click(saveOption.bounds().centerX(), saveOption.bounds().centerY());
         dynamicSleep(CONFIG.saveOperationDelay, CONFIG.saveOperationDelay + 2000);
         
-        // Wait for save operation to complete (message appears too quickly to detect reliably)
-        dynamicSleep(CONFIG.saveOperationDelay, CONFIG.saveOperationDelay + 1000); // Additional wait for save operation
+        // Wait for save operation to complete
+        dynamicSleep(CONFIG.saveOperationDelay, CONFIG.saveOperationDelay + 1000);
         
-        const imageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(imageNumber).padStart(3, '0')}.png`;
-        toastLog(`Image ${imageNumber} downloaded successfully: ${imageName}`);
-        return imageName;
+        // Use temp naming with timestamp: temp_note_TIMESTAMP_image_YYY.png
+        const tempImageName = `temp_note_${timestamp}_image_${String(imageNumber).padStart(3, '0')}.png`;
+        toastLog(`Image ${imageNumber} downloaded as temp: ${tempImageName}`);
+        return tempImageName;
         
     } catch (error) {
-        toastLog(`Error downloading image ${imageNumber}: ${error.message}`);
+        toastLog(`Error downloading temp image ${imageNumber}: ${error.message}`);
         return null;
     }
 }
@@ -823,17 +884,23 @@ function swipeToNextImage() {
 }
 
 /**
- * Downloads all images from current note
- * 下载当前笔记的所有图片
+ * Downloads all images from current note with temp naming
+ * 下载当前笔记的所有图片，使用临时命名
  * 
- * @param {number} noteIndex - Note index for naming
- * @returns {Object} - Object with imageCount and imagePaths
+ * @param {string} timestamp - Timestamp for temp naming
+ * @returns {Object} - Object with imageCount and tempImagePaths
  */
-function downloadNoteImages(noteIndex) {
+function downloadNoteImagesTemp(timestamp) {
     let imageCount = 0;
-    const imagePaths = [];
+    const tempImagePaths = [];
     
-    toastLog(`Starting image download for note ${noteIndex}`);
+    toastLog(`Starting temp image download with timestamp ${timestamp}`);
+    
+    // Get initial list of files before downloading
+    const initialFiles = files.listDir(CONFIG.appImagesDir).filter(file => 
+        (file.endsWith('.jpg') || file.endsWith('.png'))
+    );
+    toastLog(`📁 Initial files in Pictures directory: ${initialFiles.length}`);
     
     // Gallery is already open from previous clickNoteImage() call
     // No need to call clickNoteImage() again
@@ -852,10 +919,10 @@ function downloadNoteImages(noteIndex) {
         
         toastLog(`Processing image ${currentImage}/${totalImages}`);
         
-        // Download current image
-        const imagePath = downloadCurrentImage(noteIndex, currentImage);
-        if (imagePath) {
-            imagePaths.push(imagePath);
+        // Download current image with temp naming
+        const tempImagePath = downloadCurrentImageTemp(timestamp, currentImage);
+        if (tempImagePath) {
+            tempImagePaths.push(tempImagePath);
             imageCount++;
         }
         
@@ -876,19 +943,30 @@ function downloadNoteImages(noteIndex) {
     back();
     dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
     
-    toastLog(`Downloaded ${imageCount} images for note ${noteIndex}`);
-    return { imageCount, imagePaths };
+    // Get final list of files after downloading
+    const finalFiles = files.listDir(CONFIG.appImagesDir).filter(file => 
+        (file.endsWith('.jpg') || file.endsWith('.png'))
+    );
+    toastLog(`📁 Final files in Pictures directory: ${finalFiles.length}`);
+    
+    // Find newly downloaded files by comparing file lists
+    const newFiles = finalFiles.filter(file => !initialFiles.includes(file));
+    toastLog(`📁 Newly downloaded files: ${newFiles.length}`);
+    
+    toastLog(`Downloaded ${imageCount} temp images with timestamp ${timestamp}`);
+    return { imageCount, tempImagePaths, newFiles };
 }
 
 /**
- * Moves images from app directory to organized structure
- * 将图片从应用目录移动到有组织的结构中
+ * Organizes downloaded images with final naming using posting date and timestamp
+ * 使用发布日期和时间戳组织下载的图片，最终命名
  * 
- * @param {number} noteIndex - Note index for naming
- * @param {number} imageCount - Number of images to move
- * @returns {Array} - Array of moved image objects
+ * @param {Array} downloadedFiles - Array of actual downloaded file names
+ * @param {string} postingDate - Posting date in YYYYMMDD format
+ * @param {string} timestamp - Unique timestamp
+ * @returns {Array} - Array of organized image objects
  */
-function moveImagesFromAppDirectory(noteIndex, imageCount) {
+function organizeImagesWithTimestamp(downloadedFiles, postingDate, timestamp) {
     const internalVaultDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.internalVault);
     const imagesDir = files.join(internalVaultDir, DIRECTORY_CONFIG.subDirs.images);
     
@@ -900,56 +978,37 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
     toastLog(`📁 图片目录: ${imagesDir}`);
     
     try {
-        // Get list of files in Pictures directory
-        const pictureFiles = files.listDir(CONFIG.appImagesDir);
-        const imageFiles = pictureFiles.filter(file => file.endsWith('.jpg') || file.endsWith('.png'));
-        
-        toastLog(`📁 Found ${imageFiles.length} image files in Pictures directory`);
-        toastLog(`📁 在Pictures目录中找到 ${imageFiles.length} 个图片文件`);
-        
-        // Sort by filename (newer files typically have later timestamps in filename)
-        // Files have format like promphoto_1754016938841.png (timestamp in milliseconds)
-        const recentImages = imageFiles
-            .sort((a, b) => {
-                // Extract timestamp from filename if possible
-                // Look for pattern: promphoto_XXXXXXXXXXXX.png where X is digits
-                const aMatch = a.match(/promphoto_(\d+)\.png/);
-                const bMatch = b.match(/promphoto_(\d+)\.png/);
-                
-                if (aMatch && bMatch) {
-                    // Both have timestamps, compare them numerically (larger number = newer)
-                    const aTime = parseInt(aMatch[1]);
-                    const bTime = parseInt(bMatch[1]);
-                    return bTime - aTime; // Descending order (newest first)
-                } else if (aMatch) {
-                    // Only a has timestamp, put it first
-                    return -1;
-                } else if (bMatch) {
-                    // Only b has timestamp, put it first
-                    return 1;
-                } else {
-                    // Neither has timestamp, sort alphabetically (newer files often come later)
-                    return b.localeCompare(a);
-                }
-            })
-            .slice(0, imageCount); // Get the most recent images
-        
-        toastLog(`📁 Found ${recentImages.length} recent images to move`);
-        toastLog(`📁 找到 ${recentImages.length} 个最近的图片需要移动`);
+        toastLog(`📁 Found ${downloadedFiles.length} downloaded files to organize`);
+        toastLog(`📁 找到 ${downloadedFiles.length} 个下载的文件需要组织`);
         
 
         
-        // Move images to organized structure with filename mapping
-        // Reverse the numbering so newest file (last in gallery) becomes image_001
-        for (let i = 0; i < recentImages.length; i++) {
-            const sourcePath = files.join(CONFIG.appImagesDir, recentImages[i]);
-            // Reverse the numbering: newest file (i=0) should be image_001, oldest file should be image_N
-            const imageNumber = recentImages.length - i;
-            const newImageName = `note_${String(noteIndex).padStart(3, '0')}_image_${String(imageNumber).padStart(3, '0')}.png`;
-            const destPath = files.join(imagesDir, newImageName);
+        // Ensure destination directory exists
+        if (!files.exists(imagesDir)) {
+            const dirCreated = createDirectoryWithFallbacks(imagesDir, "Images directory");
+            if (!dirCreated) {
+                toastLog(`❌ Failed to create images directory`);
+                return [];
+            }
+        }
+        
+        // Verify directory access
+        if (!verifyDirectoryAccess(imagesDir, "Images directory")) {
+            toastLog(`❌ Images directory not accessible`);
+            return [];
+        }
+        
+        // Move and rename downloaded images to final structure
+        for (let i = 0; i < downloadedFiles.length; i++) {
+            const sourcePath = files.join(CONFIG.appImagesDir, downloadedFiles[i]);
+            const imageNumber = i + 1;
             
-            toastLog(`📁 Moving: ${sourcePath} → ${destPath}`);
-            toastLog(`📁 移动: ${sourcePath} → ${destPath}`);
+            // Generate final name with timestamp: note_YYYYMMDD_TIMESTAMP_image_YYY.png
+            const finalImageName = `note_${postingDate}_${timestamp}_image_${String(imageNumber).padStart(3, '0')}.png`;
+            const destPath = files.join(imagesDir, finalImageName);
+            
+            toastLog(`📁 Organizing: ${sourcePath} → ${destPath}`);
+            toastLog(`📁 组织: ${sourcePath} → ${destPath}`);
             
             try {
                 // Check if source file exists
@@ -978,39 +1037,35 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
                 for (let retry = 1; retry <= 3; retry++) {
                     try {
                         toastLog(`🔄 Moving file (attempt ${retry}/3): ${sourcePath} → ${destPath}`);
-                files.move(sourcePath, destPath);
+                        files.move(sourcePath, destPath);
                         
                         // Verify the file was moved successfully
                         if (files.exists(destPath)) {
-                movedImages.push({
-                    originalName: recentImages[i],
-                    newName: newImageName,
-                    path: destPath,
-                    relativePath: `images/${newImageName}`
-                });
-                            toastLog(`✅ Moved image: ${recentImages[i]} → ${newImageName}`);
-                            toastLog(`✅ 移动图片: ${recentImages[i]} → ${newImageName}`);
+                            movedImages.push({
+                                originalName: downloadedFiles[i],
+                                newName: finalImageName,
+                                path: destPath,
+                                relativePath: `images/${finalImageName}`
+                            });
+                            toastLog(`✅ Successfully organized image: ${downloadedFiles[i]} → ${finalImageName}`);
                             moveSuccess = true;
                             break;
                         } else {
                             toastLog(`❌ File was not moved successfully (attempt ${retry}/3): ${destPath}`);
-                            toastLog(`❌ Source file still exists: ${files.exists(sourcePath) ? 'Yes' : 'No'}`);
-                            toastLog(`❌ Destination file exists: ${files.exists(destPath) ? 'Yes' : 'No'}`);
                             if (retry < 3) {
-                                sleep(1000); // Wait before retry
+                                dynamicSleep(1000, 2000); // Wait before retry
                             }
                         }
                     } catch (moveError) {
-                        toastLog(`❌ Error moving image ${recentImages[i]} (attempt ${retry}/3): ${moveError.message}`);
-                        toastLog(`❌ Error type: ${moveError.constructor.name}`);
+                        toastLog(`❌ Error organizing image ${downloadedFiles[i]} (attempt ${retry}/3): ${moveError.message}`);
                         if (retry < 3) {
-                            sleep(1000); // Wait before retry
+                            dynamicSleep(1000, 2000); // Wait before retry
                         }
                     }
                 }
                 
                 if (!moveSuccess) {
-                    toastLog(`❌ Failed to move image after 3 attempts: ${recentImages[i]}`);
+                    toastLog(`❌ Failed to organize image after 3 attempts: ${downloadedFiles[i]}`);
                     toastLog(`🔄 Trying copy and delete as fallback...`);
                     
                     try {
@@ -1019,13 +1074,12 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
                         if (files.exists(destPath)) {
                             files.remove(sourcePath);
                             movedImages.push({
-                                originalName: recentImages[i],
-                                newName: newImageName,
+                                originalName: downloadedFiles[i],
+                                newName: finalImageName,
                                 path: destPath,
-                                relativePath: `images/${newImageName}`
+                                relativePath: `images/${finalImageName}`
                             });
-                            toastLog(`✅ Copied and deleted image: ${recentImages[i]} → ${newImageName}`);
-                            toastLog(`✅ 复制并删除图片: ${recentImages[i]} → ${newImageName}`);
+                            toastLog(`✅ Copied and deleted image: ${sortedTempImages[i]} → ${finalImageName}`);
                         } else {
                             toastLog(`❌ Copy operation failed: ${destPath}`);
                         }
@@ -1034,18 +1088,18 @@ function moveImagesFromAppDirectory(noteIndex, imageCount) {
                     }
                 }
             } catch (error) {
-                toastLog(`❌ Error moving image ${recentImages[i]}: ${error.message}`);
+                toastLog(`❌ Error organizing image ${sortedTempImages[i]}: ${error.message}`);
             }
         }
         
+        toastLog(`📁 Successfully organized ${movedImages.length} images`);
+        toastLog(`📁 成功组织 ${movedImages.length} 个图片`);
+        return movedImages;
+        
     } catch (error) {
-        toastLog(`❌ Error accessing Pictures directory: ${error.message}`);
+        toastLog(`❌ Error organizing images: ${error.message}`);
+        return [];
     }
-    
-    toastLog(`📁 Successfully moved ${movedImages.length} images to organized structure`);
-    toastLog(`📁 成功移动 ${movedImages.length} 张图片到有组织的结构中`);
-    
-    return movedImages;
 }
 
 /**
@@ -1134,7 +1188,7 @@ function generateExternalMarkdown(noteData) {
         
         toastLog(`✅ External public directory ready: ${externalPublicDir}`);
         
-        const externalFilename = noteData.markdownFile.replace('.md', '_external.md');
+        const externalFilename = `note_${noteData.postingDate}_${noteData.timestamp}_external.md`;
         const externalMarkdownPath = files.join(externalPublicDir, externalFilename);
         
         let markdownContent = `# ${noteData.title}\n\n`;
@@ -1480,8 +1534,8 @@ function generateMarkdownOnMobile(noteData) {
         
         toastLog(`✅ Internal vault directory ready: ${internalVaultDir}`);
         
-        // Create internal markdown filename
-        const internalFilename = noteData.markdownFile.replace('.md', '_internal.md');
+        // Create internal markdown filename with timestamp only
+        const internalFilename = `note_${noteData.postingDate}_${noteData.timestamp}_internal.md`;
         const internalMarkdownPath = files.join(internalVaultDir, internalFilename);
         
         let markdownContent = `# ${noteData.title}\n\n`;
@@ -1670,22 +1724,13 @@ function main() {
             toastLog(`\n🔄 Processing note ${processedCount + 1}/${maxNotesToProcess}`);
             toastLog(`🔄 处理笔记 ${processedCount + 1}/${maxNotesToProcess}`);
             
-            // Step 1: Extract note title from home page
-            const noteTitle = extractNoteTitle();
-            if (!noteTitle) {
-                toastLog("Could not extract note title, skipping");
-                return;
-            }
-            
-            toastLog(`✅ Successfully extracted note title: ${noteTitle}`);
-            
-            // Step 2: Check if note is already downloaded
-            if (isNoteDownloaded(noteTitle)) {
-                toastLog(`⚠️ Note already downloaded: ${noteTitle}`);
-                toastLog(`⚠️ 笔记已下载: ${noteTitle}`);
+            // Step 1: Find next undownloaded note from all visible notes
+            const nextNote = findNextUndownloadedNote();
+            if (!nextNote) {
+                toastLog("No undownloaded notes found on current screen");
                 
-                // Step 2.5: Scroll to find next undownloaded note
-                const scrollSuccess = scrollToNextUndownloadedNote();
+                // Step 1.5: Scroll to reveal more notes
+                const scrollSuccess = scrollToRevealMoreNotes();
                 if (!scrollSuccess) {
                     toastLog("❌ No more undownloaded notes available");
                     break;
@@ -1693,10 +1738,13 @@ function main() {
                 continue;
             }
             
+            const { title: noteTitle, index: noteIndex } = nextNote;
+            toastLog(`✅ Found undownloaded note at index ${noteIndex}: ${noteTitle}`);
+            
             // Step 3: Navigate to note page for processing
-            const noteClickSuccess = clickFirstNote();
+            const noteClickSuccess = clickNoteByIndex(noteIndex);
             if (!noteClickSuccess) {
-                toastLog("❌ Failed to navigate to note page");
+                toastLog(`❌ Failed to navigate to note page for note at index ${noteIndex}`);
                 break;
             }
             
@@ -1710,17 +1758,26 @@ function main() {
                 toastLog("✅ Successfully clicked on note image!");
                 toastLog("✅ 成功点击笔记图片！");
                 
-                // Step 5: Download images with pagination
-                toastLog("Starting image download process...");
-                const imageResult = downloadNoteImages(processedCount + 1); // Use processed count + 1 for note index
+                // Step 5: Download images with temp naming
+                toastLog("Starting temp image download process...");
+                const timestamp = Date.now().toString();
+                const imageResult = downloadNoteImagesTemp(timestamp);
                 
                 if (imageResult && imageResult.imageCount > 0) {
-                    toastLog(`✅ Successfully downloaded ${imageResult.imageCount} images!`);
-                    toastLog(`✅ 成功下载 ${imageResult.imageCount} 张图片！`);
+                    toastLog(`✅ Successfully downloaded ${imageResult.imageCount} temp images!`);
+                    toastLog(`✅ 成功下载 ${imageResult.imageCount} 张临时图片！`);
                     
-                    // Step 6: Move images from app directory to organized structure
-                    toastLog("Moving images to organized structure...");
-                    const movedImages = moveImagesFromAppDirectory(processedCount + 1, imageResult.imageCount);
+                    // Step 6: Extract additional note data for final naming
+                    const noteContent = extractNoteContent();
+                    const viewCount = extractViewCount();
+                    const { postingDate, location } = extractNoteDateAndLocation();
+                    
+                    // Step 7: Extract restaurant information (after scrolling from date/location extraction)
+                    const restaurantName = extractRestaurantInformation();
+                    
+                    // Step 8: Organize images with final naming using posting date and timestamp
+                    toastLog("Organizing images with final naming...");
+                    const movedImages = organizeImagesWithTimestamp(imageResult.newFiles, postingDate, timestamp);
                     
                     if (movedImages && movedImages.length > 0) {
                         toastLog(`✅ Successfully moved ${movedImages.length} images to organized structure!`);
@@ -1737,19 +1794,17 @@ function main() {
                         // Step 9: Create note data object for metadata
                         const noteData = {
                             title: noteTitle,
-                            timestamp: new Date().toISOString(),
+                            timestamp: timestamp, // Use the same timestamp from image download
                             viewCount: viewCount,
                             restaurantName: restaurantName || "Unknown",
                             imageCount: imageResult.imageCount,
                             postingDate: postingDate,
                             location: location,
-                            markdownFile: `note_${postingDate || 'unknown'}_${String(processedCount + 1).padStart(3, '0')}_${Date.now()}.md`,
-                            imagePrefix: `note_${String(processedCount + 1).padStart(3, '0')}`,
+                            markdownFile: `note_${postingDate || 'unknown'}_${timestamp}.md`,
                             contentHash: generateContentHash(noteContent),
                             downloadDate: new Date().toISOString(),
                             images: movedImages,
-                            content: noteContent,
-                            noteIndex: processedCount + 1
+                            content: noteContent
                         };
                         
                         // Step 10: Generate internal markdown file

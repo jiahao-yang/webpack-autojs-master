@@ -768,16 +768,15 @@ function resumeFromMetadata() {
 ```
 /storage/emulated/0/Download/dianping_notes/
 ├── internal_vault/                    ← Obsidian vault (local access)
-│   ├── note_20240115_001_1753871876436_internal.md
-│   ├── note_20240115_002_1753871876437_internal.md
+│   ├── note_20240115_1753871876436_internal.md
+│   ├── note_20240115_1753871876437_internal.md
 │   └── images/
-│       ├── note_001_image_001.png
-│       ├── note_001_image_002.png
-│       ├── note_002_image_001.png
-│       └── note_002_image_002.png
+│       ├── note_20240115_1753871876436_image_001.png
+│       ├── note_20240115_1753871876436_image_002.png
+│       └── note_20240115_1753871876437_image_001.png
 ├── external_public/                   ← Public sharing (Cloudflare)
-│   ├── note_20240115_001_1753871876436_external.md
-│   └── note_20240115_002_1753871876437_external.md
+│   ├── note_20240115_1753871876436_external.md
+│   └── note_20240115_1753871876437_external.md
 ├── metadata/
 │   ├── downloaded_notes.json         ← Metadata persistence
 │   └── upload_errors.log             ← Upload error logging
@@ -787,15 +786,6 @@ function resumeFromMetadata() {
 ```
 
 ## 17. Filename Mapping (文件名映射)
-
-### 17.1 Image Naming Convention (图像命名约定)
-- **Format**: `note_XXX_image_YYY.png`
-- **Example**: `note_001_image_001.png`, `note_001_image_002.png`
-- **Benefits**: 
-  - Easy to browse all images in one directory
-  - Clear mapping to source notes
-  - Sortable by note and image order
-  - No nested directories
 
 ### 17.2 Enhanced File Naming Convention (增强文件命名约定)
 
@@ -846,11 +836,12 @@ function resumeFromMetadata() {
 - Click on "笔记" text element using position-based clicking
 - Verify navigation with sleep delay
 
-#### Step 2: Click on Note to Navigate
-**Requirement**: Click on a note; it will go to the next page (as shown in screenshots/home-page.jpg).
+#### Step 2: Click on Specific Note to Navigate
+**Requirement**: Click on the specific undownloaded note; it will go to the next page (as shown in screenshots/home-page.jpg).
 **Implementation**:
-- Use `clickFirstNote()` function
+- Use `clickNoteByIndex(noteIndex)` function
 - Find elements with `desc("reculike_main_image")` on home page
+- Click the specific note at the returned index from `findNextUndownloadedNote()`
 - Use position-based clicking to navigate to note page
 - Wait for page transition with navigation delay
 
