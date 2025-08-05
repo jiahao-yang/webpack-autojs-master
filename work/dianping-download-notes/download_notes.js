@@ -1117,31 +1117,37 @@ function generateExternalMarkdown(noteData) {
     try {
         const externalPublicDir = files.join(DIRECTORY_CONFIG.baseDir, DIRECTORY_CONFIG.subDirs.externalPublic);
         
-        toastLog(`✅ Using external public directory: ${externalPublicDir}`);
+        // Ensure directory exists using the new directory management system
+        if (!files.exists(externalPublicDir)) {
+            const dirCreated = createDirectoryWithFallbacks(externalPublicDir, "External public directory");
+            if (!dirCreated) {
+                toastLog(`❌ Failed to create external public directory`);
+                return null;
+            }
+        }
+        
+        // Verify directory access
+        if (!verifyDirectoryAccess(externalPublicDir, "External public directory")) {
+            toastLog(`❌ External public directory not accessible`);
+            return null;
+        }
+        
+        toastLog(`✅ External public directory ready: ${externalPublicDir}`);
         
         const externalFilename = noteData.markdownFile.replace('.md', '_external.md');
         const externalMarkdownPath = files.join(externalPublicDir, externalFilename);
         
         let markdownContent = `# ${noteData.title}\n\n`;
         
-        // Add metadata
-        if (noteData.postingDate) {
-            markdownContent += `**Posted:** ${noteData.postingDate}\n\n`;
-        }
-        if (noteData.location) {
-            markdownContent += `**Location:** ${noteData.location}\n\n`;
-        }
-        if (noteData.restaurantName) {
-            markdownContent += `**Restaurant:** ${noteData.restaurantName}\n\n`;
-        }
-        if (noteData.viewCount) {
-            markdownContent += `**Views:** ${noteData.viewCount}\n\n`;
-        }
+        // Add metadata - match internal layout exactly
+        markdownContent += `**Restaurant:** ${noteData.restaurantName}\n`;
+        markdownContent += `**Posted:** ${noteData.postingDate || 'Unknown'}\n`;
+        markdownContent += `**Location:** ${noteData.location || 'Unknown'}\n`;
+        markdownContent += `**Views:** ${noteData.viewCount || 'Unknown'}\n`;
+        markdownContent += `**Downloaded:** ${noteData.downloadDate}\n\n`;
         
         // Add content
-        if (noteData.content) {
-            markdownContent += `## Content\n\n${noteData.content}\n\n`;
-        }
+        markdownContent += `${noteData.content}\n\n`;
         
         // Add images with ImgBB URLs
         if (noteData.images && noteData.images.length > 0) {
@@ -1149,12 +1155,18 @@ function generateExternalMarkdown(noteData) {
             noteData.images.forEach((image, index) => {
                 if (image.imgbbUrl) {
                     markdownContent += `![Image ${index + 1}](${image.imgbbUrl})\n\n`;
+                } else {
+                    toastLog(`⚠️ Warning: Image ${index + 1} missing imgbbUrl`);
                 }
             });
         }
         
         files.write(externalMarkdownPath, markdownContent, "utf-8");
         toastLog(`Generated external markdown file: ${externalMarkdownPath}`);
+        
+        // Update noteData with external markdown path
+        noteData.externalMarkdownPath = externalMarkdownPath;
+        
         return externalMarkdownPath;
     } catch (error) {
         toastLog(`Error generating external markdown: ${error.message}`);
@@ -1775,15 +1787,17 @@ function main() {
                             continue; // Move to next iteration
                         }
                         
-                        // Step 12: Generate external markdown with ImgBB URLs
+                        // Step 12: Update noteData with uploaded images for external markdown generation
+                        noteData.images = uploadedImages;
+                        
+                        // Step 13: Generate external markdown with ImgBB URLs
                         const externalMarkdownPath = generateExternalMarkdown(noteData);
                         if (externalMarkdownPath) {
                             noteData.externalMarkdownPath = externalMarkdownPath;
                             toastLog(`✅ Generated external markdown file: ${externalMarkdownPath}`);
                         }
                         
-                        // Step 13: Update metadata with uploaded images
-                        noteData.images = uploadedImages;
+                        // Step 14: Update metadata with uploaded images
                         addDownloadedNote(noteData);
                         processedCount++;
                         

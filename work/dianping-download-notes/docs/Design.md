@@ -797,21 +797,31 @@ function resumeFromMetadata() {
   - Sortable by note and image order
   - No nested directories
 
-### 17.2 Markdown Naming Convention (Markdown命名约定)
-- **Internal Format**: `note_<posting date>_XXX_TIMESTAMP_internal.md`
-- **External Format**: `note_<posting date>_XXX_TIMESTAMP_external.md`
-- **Examples**: 
-  - `note_20240115_001_1753871876436_internal.md`
-  - `note_20240115_001_1753871876436_external.md`
+### 17.2 Enhanced File Naming Convention (增强文件命名约定)
+
+#### Two-Phase Image Naming (两阶段图像命名)
+**Phase 1: Temp Names**
+- **Format**: `temp_note_TIMESTAMP_image_YYY.png`
+- **Example**: `temp_note_1753871876436_image_001.png`
+- **Purpose**: Safe temporary storage during download
+
+**Phase 2: Final Names**
+- **Format**: `note_YYYYMMDD_TIMESTAMP_image_YYY.png`
+- **Example**: `note_20240115_1753871876436_image_001.png`
 - **Components**:
-  - `<posting date>`: Date when note was posted (YYYYMMDD format)
-  - `XXX`: Sequential number for notes posted on same date
+  - `YYYYMMDD`: Posting date in YYYYMMDD format
   - `TIMESTAMP`: Unique timestamp to prevent conflicts
-  - `_internal` or `_external`: Clear identification of purpose
+  - `image_YYY`: Image sequence number
+
+#### Markdown Naming Convention (Markdown命名约定)
+- **Internal Format**: `note_YYYYMMDD_TIMESTAMP_internal.md`
+- **External Format**: `note_YYYYMMDD_TIMESTAMP_external.md`
+- **Examples**: 
+  - `note_20240115_1753871876436_internal.md`
+  - `note_20240115_1753871876436_external.md`
 - **Benefits**:
   - Chronological sorting by posting date
   - Unique timestamps prevent conflicts
-  - Clear note sequence identification
   - Easy to match with images
   - Clear separation between internal and external versions
 
@@ -827,9 +837,7 @@ function resumeFromMetadata() {
 
 ## 18. Workflow Implementation (工作流程实现)
 
-### 18.1 Requirements Workflow Integration (需求工作流程集成)
-
-Based on Requirements.md, here's how we implement each step:
+### 18.1 Based on Requirements.md, here's how we implement each step:
 
 #### Step 1: Navigate to Notes Tab
 **Requirement**: Make sure we're on the "笔记" tab. Let's call this the home page thereafter.
@@ -1105,26 +1113,6 @@ metadataManagement():
 - **Structure**: Markdown only, no local images needed
 - **Use case**: Web publishing, social sharing, public access
 
-### 19.2 Enhanced File Structure (增强文件结构)
-
-```
-/storage/emulated/0/Download/dianping_notes/
-├── internal_vault/                    ← Obsidian vault
-│   ├── note_20240115_001_1753871876436_internal.md
-│   ├── note_20240115_002_1753871876437_internal.md
-│   └── images/
-│       ├── note_001_image_001.png
-│       ├── note_001_image_002.png
-│       ├── note_002_image_001.png
-│       └── note_002_image_002.png
-├── external_public/                   ← Public sharing
-│   ├── note_20240115_001_1753871876436_external.md
-│   └── note_20240115_002_1753871876437_external.md
-├── metadata/
-│   ├── downloaded_notes.json
-│   └── upload_errors.log             ← Error logging
-```
-
 ### 19.3 Implementation Strategy (实施策略)
 
 #### Upload Strategy
@@ -1163,7 +1151,7 @@ metadataManagement():
             originalName: "IMG_20240115_103001.jpg",
             newName: "note_001_image_001.png",
             localPath: "internal_vault/images/note_001_image_001.png",
-            externalUrl: "https://img.remit.ee/api/file/...",
+            imgbbUrl: "https://i.ibb.co/...",
             uploadSuccess: true,
             uploadTimestamp: "2024-01-15T10:30:05Z"
         }
@@ -1194,11 +1182,12 @@ const IMGBB_CONFIG = {
 #### Step-by-Step Process
 1. **Download images** → Save to temp directory
 2. **Move to internal vault** → Organize with relative paths
-3. **Upload to img.remit.ee** → Get external URLs
+3. **Upload to ImgBB** → Get external URLs
 4. **Generate internal MD** → Use relative image paths
-5. **Generate external MD** → Use external URLs (if uploads successful)
-6. **Update metadata** → Track both versions and upload status
-7. **Clean up temp files** → Remove temporary images
+5. **Update noteData with uploaded images** → Include imgbbUrl for external MD
+6. **Generate external MD** → Use external URLs (if uploads successful)
+7. **Update metadata** → Track both versions and upload status
+8. **Clean up temp files** → Remove temporary images
 
 #### Upload Implementation
 ```javascript
@@ -1234,6 +1223,7 @@ function uploadImageToImgBB(imagePath, imageName = null) {
 - ✅ **No bandwidth costs**: ImgBB handles hosting
 - ✅ **CDN delivery**: Global content distribution
 - ✅ **Clean structure**: Markdown only, no local files needed
+- ✅ **Consistent layout**: Matches internal markdown structure exactly
 - ✅ **Quality assurance**: Only generated when uploads successful
 
 #### Overall Benefits
