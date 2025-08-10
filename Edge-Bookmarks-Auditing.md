@@ -11,10 +11,26 @@ This guide shows how to audit writes to Edge `Bookmarks` only (plus `Bookmarks.b
 ---
 
 ## 1) Enable auditing policy (Success only)
-Run PowerShell as Administrator:
+Run PowerShell as Administrator.
+
+First, find the exact subcategory name on your system (it may be localized, e.g., "File System" or "文件系统"):
 
 ```powershell
-auditpol /set /subcategory:"File System" /success:enable /failure:disable | cat
+auditpol /get /subcategory:*
+```
+
+Enable Success-only auditing using the exact name you see:
+
+```powershell
+auditpol /set /subcategory:"File System" /success:enable /failure:disable
+# If localized (example):
+# auditpol /set /subcategory:"文件系统" /success:enable /failure:disable
+```
+
+(Optional) Ensure subcategory auditing overrides legacy settings:
+
+```powershell
+auditpol /set /option:SCENoApplyLegacy /value:Enable
 ```
 
 ## 2) Add SACL to the two files (Bookmarks and Bookmarks.bak)
@@ -56,9 +72,9 @@ foreach ($p in @($bookmarks, $bookmarksBak)) {
 100 MB is typically enough for these two files. Enable auto-archive so older logs are preserved:
 
 ```powershell
-wevtutil sl Security /ms:104857600 | cat     # 100 MB
-wevtutil sl Security /ab:true | cat          # auto-archive when full
-wevtutil gl Security | cat                   # verify
+wevtutil sl Security /ms:104857600     # 100 MB
+wevtutil sl Security /ab:true          # auto-archive when full
+wevtutil gl Security                   # verify
 ```
 
 ## 4) Query historical writes (when you notice later)
@@ -81,7 +97,7 @@ Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4663; StartTime=$since} |
     @{n='Path';e={($_.Message -split "`n" | ? {$_ -match '^Object Name:'}) -replace '^.*?:\s*',''}},
     @{n='Access';e={($_.Message -split "`n" | ? {$_ -match '^Accesses:'}) -replace '^.*?:\s*',''}} |
   Sort-Object TimeCreated |
-  Format-Table -Auto | cat
+  Format-Table -Auto
 ```
 
 ## 5) Where are archived logs?
@@ -91,7 +107,7 @@ Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4663; StartTime=$since} |
 Open archived `.evtx` in Event Viewer, or query via:
 
 ```powershell
-wevtutil qe "C:\Windows\System32\winevt\Logs\Archive-Security-*.evtx" /q:"*[System[(EventID=4663)]]" /f:text | cat
+wevtutil qe "C:\Windows\System32\winevt\Logs\Archive-Security-*.evtx" /q:"*[System[(EventID=4663)]]" /f:text
 ```
 
 ## 6) Optional: periodic export (防止滚动覆盖)
@@ -99,7 +115,7 @@ wevtutil qe "C:\Windows\System32\winevt\Logs\Archive-Security-*.evtx" /q:"*[Syst
 ```powershell
 $xpath = "*[System[(EventID=4663)]] and *[EventData[Data[@Name='ObjectName'] and (contains(.,'\\Microsoft\\Edge\\User Data\\') and contains(.,'Bookmarks'))]]"
 $dest  = Join-Path $env:USERPROFILE ("EdgeBookmarksAudit_{0:yyyyMMdd}.evtx" -f (Get-Date))
-wevtutil epl Security $dest /q:$xpath | cat
+wevtutil epl Security $dest /q:$xpath
 ```
 
 ## 7) Stop auditing and clean up (抓到元凶后关闭)
@@ -120,9 +136,11 @@ foreach ($p in @($bookmarks, $bookmarksBak)) {
 }
 
 # Optionally disable auditing and shrink log
-auditpol /set /subcategory:"File System" /success:disable /failure:disable | cat
-wevtutil sl Security /ms:20971520 | cat   # 20 MB
-wevtutil sl Security /ab:false | cat
+auditpol /set /subcategory:"File System" /success:disable /failure:disable
+# If localized (example):
+# auditpol /set /subcategory:"文件系统" /success:disable /failure:disable
+wevtutil sl Security /ms:20971520   # 20 MB
+wevtutil sl Security /ab:false
 ```
 
 ## FAQ
