@@ -1,0 +1,203 @@
+{
+"log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "type": "vless",
+
+      
+      "tag": "vless-sb",
+      "listen": "::",
+      "listen_port": 19033,
+      "users": [
+        {
+          "uuid": "705d806b-45ab-4538-8c2b-5ee21ac7ed76",
+          "flow": "xtls-rprx-vision"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "www.yahoo.com",
+          "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": "www.yahoo.com",
+            "server_port": 443
+          },
+          "private_key": "gHUn1fwijk_z5PmYYEpXuGxdCOYBmaLUZl3JHqBC3VU",
+          "short_id": ["8e28216c"]
+        }
+      }
+    },
+{
+        "type": "vmess",
+
+ 
+        "tag": "vmess-sb",
+        "listen": "::",
+        "listen_port": 2087,
+        "users": [
+            {
+                "uuid": "705d806b-45ab-4538-8c2b-5ee21ac7ed76",
+                "alterId": 0
+            }
+        ],
+        "transport": {
+            "type": "ws",
+            "path": "705d806b-45ab-4538-8c2b-5ee21ac7ed76-vm",
+            "max_early_data":2048,
+            "early_data_header_name": "Sec-WebSocket-Protocol"    
+        },
+        "tls":{
+                "enabled": true,
+                "server_name": "sb.yjh-mini-program.space",
+                "certificate_path": "/root/ygkkkca/cert.crt",
+                "key_path": "/root/ygkkkca/private.key"
+            }
+    }, 
+    {
+        "type": "hysteria2",
+
+ 
+        "tag": "hy2-sb",
+        "listen": "::",
+        "listen_port": 38739,
+        "users": [
+            {
+                "password": "705d806b-45ab-4538-8c2b-5ee21ac7ed76"
+            }
+        ],
+        "ignore_client_bandwidth":false,
+        "tls": {
+            "enabled": true,
+            "alpn": [
+                "h3"
+            ],
+            "certificate_path": "/root/ygkkkca/cert.crt",
+            "key_path": "/root/ygkkkca/private.key"
+        }
+    },
+        {
+            "type":"tuic",
+
+     
+            "tag": "tuic5-sb",
+            "listen": "::",
+            "listen_port": 28219,
+            "users": [
+                {
+                    "uuid": "705d806b-45ab-4538-8c2b-5ee21ac7ed76",
+                    "password": "705d806b-45ab-4538-8c2b-5ee21ac7ed76"
+                }
+            ],
+            "congestion_control": "bbr",
+            "tls":{
+                "enabled": true,
+                "alpn": [
+                    "h3"
+                ],
+                "certificate_path": "/root/ygkkkca/cert.crt",
+                "key_path": "/root/ygkkkca/private.key"
+            }
+        }
+],
+"endpoints":[
+{
+"type":"wireguard",
+"tag":"warp-out",
+"address":[
+"172.16.0.2/32",
+"2606:4700:110:861f:2b9c:fc2d:fe4e:74b/128"
+],
+"private_key":"iM6JkGFKsbokri+P7FBDtJ0bwhhVOBiWjbk56KmNk20=",
+"peers": [
+{
+"address": "2606:4700:d0::a29f:c101",
+"port":2408,
+"public_key":"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+"allowed_ips": [
+"0.0.0.0/0",
+"::/0"
+],
+"reserved":[121,83,213]
+}
+]
+}
+],
+"outbounds": [
+{
+"type":"direct",
+"tag":"direct",
+"domain_strategy": "prefer_ipv4"
+},
+{
+"type":"direct",
+"tag":"vps-outbound-v4", 
+"domain_strategy":"prefer_ipv4"
+},
+{
+"type":"direct",
+"tag":"vps-outbound-v6",
+"domain_strategy":"prefer_ipv6"
+},
+{
+"type": "socks",
+"tag": "socks-out",
+"server": "127.0.0.1",
+"server_port": 40000,
+"version": "5"
+}
+],
+"route":{
+"rules":[
+{
+ "action": "sniff"
+},
+{
+"action": "resolve",
+"domain_suffix":[
+"yg_kkk"
+],
+"strategy": "prefer_ipv4"
+},
+{
+"action": "resolve",
+"domain_suffix":[
+"www.anthropic.com","api.anthropic.com","claude.ai","claudeusercontent.com","ip.sb","ip.me"
+],
+"strategy": "prefer_ipv6"
+},
+{
+"domain_suffix":[
+"yg_kkk"
+],
+"outbound":"socks-out"
+},
+{
+"domain_suffix":[
+"www.anthropic.com","api.anthropic.com","claude.ai","claudeusercontent.com","ip.sb","ip.me"
+],
+"outbound":"warp-out"
+},
+{
+"outbound":"vps-outbound-v4",
+"domain_suffix":[
+"yg_kkk"
+]
+},
+{
+"outbound":"vps-outbound-v6",
+"domain_suffix":[
+"yg_kkk"
+]
+},
+{
+"outbound": "direct",
+"network": "udp,tcp"
+}
+]
+}
+}

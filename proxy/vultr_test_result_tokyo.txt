@@ -1,0 +1,206 @@
+                   测评频道: https://t.me/vps_reviews                    
+VPS融合怪版本：2025.07.10
+Shell项目地址：https://github.com/spiritLHLS/ecs
+Go项目地址 [推荐]：https://github.com/oneclickvirt/ecs
+---------------------基础信息查询--感谢所有开源项目---------------------
+ CPU 型号          : Intel Core Processor (Broadwell, no TSX, IBRS)
+ CPU 核心数        : 1
+ CPU 频率          : 2394.454 MHz
+ CPU 缓存          : L1: 32.00 KB / L2: 4.00 MB / L3: 16.00 MB
+ AES-NI指令集      : ✔ Enabled
+ VM-x/AMD-V支持    : ❌ Disabled
+ 内存              : 241.76 MiB / 951.63 MiB
+ Swap              : 21.39 MiB / 2.34 GiB
+ 硬盘空间          : 6.70 GiB / 22.88 GiB
+ 启动盘路径        : /dev/vda2
+ 系统在线时间      : 0 days, 0 hour 7 min
+ 负载              : 0.98, 0.48, 0.18
+ 系统              : Ubuntu 22.04.5 LTS (x86_64)
+ 架构              : x86_64 (64 Bit)
+ 内核              : 5.15.0-139-generic
+ TCP加速方式       : bbr
+ 虚拟化架构        : Microsoft Hyper-V
+ NAT类型           : Port Restricted Cone
+ IPV4 ASN          : AS20473 The Constant Company, LLC
+ IPV4 位置         : Ōi / Saitama / JP
+ IPV6 ASN          : AS20473 AS-VULTR
+ IPV6 位置         : Minamishinagawa / Tokyo / Japan
+ IPV6 子网掩码     : 64
+----------------------CPU测试--通过sysbench测试-------------------------
+ -> CPU 测试中 (Fast Mode, 1-Pass @ 5sec)
+ 1 线程测试(单核)得分: 		837 Scores
+---------------------内存测试--感谢lemonbench开源-----------------------
+ -> 内存测试 Test (Fast Mode, 1-Pass @ 5sec)
+ 单线程读测试:		17527.30 MB/s
+ 单线程写测试:		12789.13 MB/s
+---------------------磁盘fio读写测试--感谢yabs开源----------------------
+Block Size | 4k            (IOPS) | 64k           (IOPS)
+  ------   | ---            ----  | ----           ---- 
+Read       | 93.78 MB/s   (23.4k) | 167.61 MB/s   (2.6k)
+Write      | 94.03 MB/s   (23.5k) | 168.49 MB/s   (2.6k)
+Total      | 187.82 MB/s  (46.9k) | 336.10 MB/s   (5.2k)
+           |                      |                     
+Block Size | 512k          (IOPS) | 1m            (IOPS)
+  ------   | ---            ----  | ----           ---- 
+Read       | 181.55 MB/s    (354) | 169.06 MB/s    (165)
+Write      | 191.20 MB/s    (373) | 180.31 MB/s    (176)
+Total      | 372.76 MB/s    (727) | 349.37 MB/s    (341)
+------------流媒体解锁--基于oneclickvirt/CommonMediaTests开源-----------
+以下测试的解锁地区是准确的，但是不是完整解锁的判断可能有误，这方面仅作参考使用
+----------------Netflix-----------------
+[IPV4]
+您的出口IP完整解锁Netflix，支持非自制剧的观看
+NF所识别的IP地域信息：日本
+[IPV6]
+您的出口IP完整解锁Netflix，支持非自制剧的观看
+NF所识别的IP地域信息：日本
+----------------Youtube-----------------
+[IPV4]
+连接方式: Youtube Video Server
+视频缓存节点地域: 日本 东京(NRT20S05)
+Youtube识别地域: 日本(JP)
+[IPV6]
+连接方式: Youtube Video Server
+视频缓存节点地域: 日本 东京(NRT20S05)
+Youtube识别地域: 日本(JP)
+---------------DisneyPlus---------------
+[IPV4]
+当前IPv4出口所在地区即将开通DisneyPlus
+[IPV6]
+当前IPv4出口所在地区即将开通DisneyPlus
+解锁Netflix，Youtube，DisneyPlus上面和下面进行比较，不同之处自行判断
+----------------流媒体解锁--感谢RegionRestrictionCheck开源--------------
+ 以下为IPV4网络测试，若无IPV4网络则无输出
+============[ Multination ]============
+ Dazn:					Failed (Error: )
+ Disney+:				No (IP Banned By Disney+ 1)
+ Netflix:				Originals Only
+ YouTube Premium:			Yes (Region: JP)
+ Amazon Prime Video:			Yes (Region: JP)
+ TVBAnywhere+:				Yes
+ Spotify Registration:			No
+ OneTrust Region:			JP [Saitama]
+ iQyi Oversea Region:			JP
+ Bing Region:				JP (Risky)
+ Apple Region:				JP
+ YouTube CDN:				Tokyo
+ Netflix Preferred CDN:			Tokyo
+ ChatGPT:				Yes
+ Google Gemini:				Yes (Region: JPN)
+ Claude:				Yes
+ Wikipedia Editability:			No
+ Google Play Store:			Japan 
+ Google Search CAPTCHA Free:		Yes
+ Steam Currency:			JPY
+ ---Forum---
+ Reddit:				No
+ ---Game---
+ SD Gundam G Generation Eternal:	No
+=======================================
+ 以下为IPV6网络测试，若无IPV6网络则无输出
+============[ Multination ]============
+ Dazn:					IPv6 Is Not Currently Supported
+ Disney+:				IPv6 Is Not Currently Supported
+ Netflix:				Originals Only
+ YouTube Premium:			Yes (Region: JP)
+ Amazon Prime Video:			IPv6 Is Not Currently Supported
+ TVBAnywhere+:				IPv6 Is Not Currently Supported
+ Spotify Registration:			No
+ OneTrust Region:			JP [Saitama]
+ iQyi Oversea Region:			IPv6 Is Not Currently Supported
+ Bing Region:				JP (Risky)
+ Apple Region:				JP
+ YouTube CDN:				Tokyo
+ Netflix Preferred CDN:			Tokyo
+ ChatGPT:				Failed (Network Connection)
+ Google Gemini:				Yes (Region: JPN)
+ Claude:				Yes
+ Wikipedia Editability:			No
+ Google Play Store:			Japan 
+ Google Search CAPTCHA Free:		Yes
+ Steam Currency:			IPv6 Is Not Currently Supported
+ ---Forum---
+ Reddit:				IPv6 Is Not Currently Supported
+ ---Game---
+ SD Gundam G Generation Eternal:	Failed (Network Connection)
+=======================================
+--------------------TikTok解锁--感谢lmc999的源脚本----------------------
+ Tiktok Region:		【JP】
+----------------三网回程--基于oneclickvirt/backtrace开源----------------
+北京电信v4 219.141.140.10           电信163    [普通线路] 
+北京联通v4 202.106.195.68           联通4837   [普通线路] 
+北京移动v4 221.179.155.161          移动CMI    [普通线路] 
+上海电信v4 202.96.209.133           电信163    [普通线路] 
+上海联通v4 210.22.97.1              联通4837   [普通线路] 
+上海移动v4 211.136.112.200          移动CMI    [普通线路] 
+广州电信v4 58.60.188.222            电信163    [普通线路] 
+广州联通v4 210.21.196.6             联通4837   [普通线路] 
+广州移动v4 120.196.165.24           移动CMI    [普通线路] 
+成都电信v4 61.139.2.69              电信163    [普通线路] 
+成都联通v4 119.6.6.6                联通4837   [普通线路] 
+成都移动v4 211.137.96.205           移动CMI    [普通线路] 
+北京电信v6 2400:89c0:1053:3::69     电信163    [普通线路] 
+北京联通v6 2400:89c0:1013:3::54     联通4837   [普通线路] 
+北京移动v6 2409:8c00:8421:1303::55  移动CMIN2  [精品线路] 
+上海电信v6 240e:e1:aa00:4000::24    电信163    [普通线路] 
+上海联通v6 2408:80f1:21:5003::a     联通4837   [普通线路] 
+上海移动v6 2409:8c1e:75b0:3003::26  移动CMIN2  [精品线路] 
+广州电信v6 240e:97c:2f:3000::44     电信163    [普通线路] 
+广州联通v6 2408:8756:f50:1001::c    联通4837   [普通线路] 
+广州移动v6 2409:8c54:871:1001::12   移动CMI    [普通线路] 
+准确线路自行查看详细路由，本测试结果仅作参考
+同一目标地址多个线路时，检测可能已越过汇聚层，除第一个线路外，后续信息可能无效
+-----------------------回程路由--基于nexttrace开源----------------------
+依次测试电信/联通/移动经过的地区及线路，核心程序来自nexttrace，请知悉!
+广州电信 58.60.188.222
+0.22 ms 	* RFC3927
+0.41 ms 	* RFC6598
+1.03 ms 	* RFC1918
+0.97 ms 	* RFC1918
+1.05 ms 	* RFC1918
+0.59 ms 	AS2914 [APNIC-AP] 日本 东京都 东京 gin.ntt.net
+0.78 ms 	AS2914 [NTT-BACKBONE] 日本 东京都 东京 gin.ntt.net
+56.84 ms 	AS4134 [CHINANET-BB] 中国 上海 www.chinatelecom.com.cn 电信
+73.75 ms 	AS4134 [CHINANET-BB] 中国 上海 www.chinatelecom.com.cn 电信
+148.88 ms 	AS4134 [CHINANET-GD] 中国 广东 广州 www.chinatelecom.com.cn
+广州联通 210.21.196.6
+0.14 ms 	* RFC3927
+0.34 ms 	* RFC6598
+1.17 ms 	* RFC1918
+0.84 ms 	* RFC1918
+0.41 ms 	AS2914 [APNIC-AP] 日本 东京都 东京 gin.ntt.net
+0.65 ms 	AS3356 日本 东京都 东京 lumen.com
+113.57 ms 	AS3356 美国 加利福尼亚 洛杉矶 lumen.com
+188.91 ms 	AS3356 美国 加利福尼亚 圣何塞 Level3-CU-Peer lumen.com
+182.36 ms 	AS4837 [CU169-BACKBONE] 中国 广东 广州 chinaunicom.cn 联通
+233.56 ms 	AS4837 [CU169-BACKBONE] 中国 广东 广州 chinaunicom.cn 联通
+183.17 ms 	AS4837 [CU169-BACKBONE] 中国 广东 广州 I-C chinaunicom.cn 联通
+188.50 ms 	AS17816 [UNICOM-GD] 中国 广东 深圳 chinaunicom.cn 联通
+190.00 ms 	AS17623 [APNIC-AP] 中国 广东 深圳 chinaunicom.cn 联通
+186.53 ms 	AS17623 中国 广东 深圳 宝安区 chinaunicom.cn 联通
+广州移动 120.196.165.24
+0.19 ms 	* RFC3927
+0.37 ms 	* RFC6598
+1.10 ms 	* RFC1918
+1.40 ms 	* RFC1918
+0.35 ms 	AS1299 [ARELION-NET] 日本 东京都 东京 arelion.com
+107.52 ms 	AS1299 [ARELION-NET] 美国 加利福尼亚 洛杉矶 arelion.com
+114.82 ms 	AS1299 [ARELION-NET] 美国 加利福尼亚 圣何塞 arelion.com
+111.66 ms 	AS1299 [ARELION-NET] 美国 加利福尼亚 圣何塞 Telia-CMI-Peer arelion.com
+111.81 ms 	AS58453 [CMI-INT] 美国 加利福尼亚 圣何塞 cmi.chinamobile.com 移动
+270.17 ms 	AS58453 [CMI-INT] 中国 广东 广州 cmi.chinamobile.com 移动
+169.59 ms 	AS9808 [CMNET] 中国 广东 广州 X-I chinamobileltd.com 移动
+169.91 ms 	AS9808 [CMNET] 中国 广东 广州 I-C chinamobileltd.com 移动
+179.64 ms 	AS9808 [CMNET] 中国 广东 广州 chinamobileltd.com 移动
+177.85 ms 	AS9808 [CMNET] 中国 广东 广州 chinamobileltd.com 移动
+175.13 ms 	AS56040 [APNIC-AP] 中国 广东 深圳 gd.10086.cn 移动
+--------------------自动更新测速节点列表--本脚本原创--------------------
+位置		 上传速度	 下载速度	 延迟
+Speedtest.net	 742.26Mbps	 13.16Mbps	 6.24ms	
+联通上海5G	 41.12Mbps	 176.11Mbps	 61.20ms	
+电信浙江	 8.02Mbps	 23.48Mbps	 152.54ms	
+移动Suzhou	 15.89Mbps	 0.08Mbps	 451.79ms	
+------------------------------------------------------------------------
+ 总共花费      : 5 分 27 秒
+ 时间          : Sun Aug 10 00:43:03 UTC 2025
+------------------------------------------------------------------------
