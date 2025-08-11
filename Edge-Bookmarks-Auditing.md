@@ -16,15 +16,17 @@ Run PowerShell as Administrator.
 First, find the exact subcategory name on your system (it may be localized, e.g., "File System" or "文件系统"):
 
 ```powershell
-auditpol /get /subcategory:*
+auditpol /list /subcategory:*
+# Alternatively, show current settings for all categories (localized names appear inline):
+# auditpol /get /category:*
 ```
 
 Enable Success-only auditing using the exact name you see:
 
 ```powershell
-auditpol /set /subcategory:"File System" /success:enable /failure:disable
+# auditpol /set /subcategory:"File System" /success:enable /failure:disable
 # If localized (example):
-# auditpol /set /subcategory:"文件系统" /success:enable /failure:disable
+auditpol /set /subcategory:"文件系统" /success:enable /failure:disable
 ```
 
 (Optional) Ensure subcategory auditing overrides legacy settings:
@@ -73,7 +75,6 @@ foreach ($p in @($bookmarks, $bookmarksBak)) {
 
 ```powershell
 wevtutil sl Security /ms:104857600     # 100 MB
-wevtutil sl Security /ab:true          # auto-archive when full
 wevtutil gl Security                   # verify
 ```
 
@@ -136,11 +137,10 @@ foreach ($p in @($bookmarks, $bookmarksBak)) {
 }
 
 # Optionally disable auditing and shrink log
-auditpol /set /subcategory:"File System" /success:disable /failure:disable
+# auditpol /set /subcategory:"File System" /success:disable /failure:disable
 # If localized (example):
-# auditpol /set /subcategory:"文件系统" /success:disable /failure:disable
+auditpol /set /subcategory:"文件系统" /success:disable /failure:disable
 wevtutil sl Security /ms:20971520   # 20 MB
-wevtutil sl Security /ab:false
 ```
 
 ## FAQ
