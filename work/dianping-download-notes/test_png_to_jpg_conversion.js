@@ -51,8 +51,8 @@ function convertPngToJpg(sourcePath, destPath, quality = 90) {
             return result;
         }
         
-        // Get source file size
-        result.sourceSize = files.size(sourcePath);
+        // Get source file size (use Java File API for compatibility)
+        result.sourceSize = new java.io.File(sourcePath).length();
         testLog(`📊 Source file size: ${(result.sourceSize / 1024).toFixed(2)} KB`);
         
         // Use Android's BitmapFactory for conversion
@@ -65,10 +65,10 @@ function convertPngToJpg(sourcePath, destPath, quality = 90) {
         
         testLog(`✅ Successfully decoded PNG (${bitmap.getWidth()}x${bitmap.getHeight()})`);
         
-        // Ensure destination directory exists
-        const destDir = files.getParent(destPath);
+        // Ensure destination directory exists (use Java File API for parent path)
+        const destDir = new java.io.File(destPath).getParent();
         if (!files.exists(destDir)) {
-            files.ensureDir(destPath);
+            files.ensureDir(destDir);
             testLog(`📁 Created destination directory: ${destDir}`);
         }
         
@@ -79,9 +79,9 @@ function convertPngToJpg(sourcePath, destPath, quality = 90) {
         bitmap.recycle();
         
         if (success) {
-            // Get destination file size
+            // Get destination file size (use Java File API for compatibility)
             if (files.exists(destPath)) {
-                result.destSize = files.size(destPath);
+                result.destSize = new java.io.File(destPath).length();
                 result.compressionRatio = ((result.sourceSize - result.destSize) / result.sourceSize * 100).toFixed(2);
                 result.success = true;
                 
