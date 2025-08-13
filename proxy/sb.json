@@ -166,7 +166,7 @@
 {
 "action": "resolve",
 "domain_suffix":[
-"www.anthropic.com","api.anthropic.com","claude.ai","claudeusercontent.com","ip.sb","ip.me"
+"www.anthropic.com","api.anthropic.com","claude.ai","claudeusercontent.com","ip.sb","ip.me","api.mycake.me","*.googlevideo.com","*.youtube.com","youtubei.googleapis.com","*.ytimg.com","*.ggpht.com"
 ],
 "strategy": "prefer_ipv6"
 },
@@ -178,7 +178,7 @@
 },
 {
 "domain_suffix":[
-"www.anthropic.com","api.anthropic.com","claude.ai","claudeusercontent.com","ip.sb","ip.me"
+"www.anthropic.com","api.anthropic.com","claude.ai","claudeusercontent.com","ip.sb","ip.me","api.mycake.me","*.googlevideo.com","*.youtube.com","youtubei.googleapis.com","*.ytimg.com","*.ggpht.com"
 ],
 "outbound":"warp-out"
 },
