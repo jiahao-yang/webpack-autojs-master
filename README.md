@@ -1,7 +1,14 @@
 # 概述
+
+New github repo for AutoX.js:
+https://github.com/autox-community/
+
+For available functions provided by AutoX.js, please refer to the following link:
+https://github.com/autox-community/AutoX_Docs/tree/master/docs
+
 本项目是在 https://github.com/snailuncle/webpack-autojs 项目上魔改得来，
 
-本项目的目标是做个 [autoxjs](https://github.com/kkevsekk1/AutoX) （新的开源 autojs）项目的开发工具包，即 autox-cli   
+本项目的目标是做个 [autoxjs] （新的开源 autojs）项目的开发工具包，即 autox-cli   
 满足工程化（远离刀耕火种）：自动化管理个js类库，自动对源码，编译、混淆、dex加密、打包、部署，让开发人员专心写业务。   
 当然要实现 工程化，你需要有一些nodejs开发基础知识。到目前为止尚未封装出cli和dex加密，但是已经实现了除此之外的所以功能， 
 所以刚开始你会看到很多文件，请不要害怕，只关心下面文档中提到的几个文件即可。   
