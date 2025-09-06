@@ -29,5 +29,42 @@
 
 ### PNG to JPG Conversion Requirements
 	- Use Android's BitmapFactory for reliable conversion on mobile devices.
-	- Qality levels (90%)
+	- Quality levels (90%)
 	- Log conversion statistics including file size reduction and compression ratios.
+
+### ImgBB Image Upload Requirements
+	- Upload converted JPG images to ImgBB for external hosting.
+	- Use API key authentication for secure uploads.
+	- Implement retry mechanism (up to 3 attempts) for failed uploads.
+	- Log upload success/failure status for each image.
+	- Handle upload errors gracefully and continue processing.
+
+### Dual Markdown Generation Requirements
+	- Generate two versions of markdown files:
+		1. **Internal Vault Version**: Uses relative image paths for local access
+		2. **External Public Version**: Uses ImgBB URLs for public sharing
+	- Internal markdown should be self-contained for offline access
+	- External markdown should only be generated if all image uploads succeed
+	- Both versions should have identical structure and content
+
+### Directory Structure Requirements
+	- Create organized directory structure:
+		- `internal_vault/`: Contains internal markdown and images
+		- `external_public/`: Contains external markdown files only
+		- `images/`: Image files for internal vault
+		- `metadata/`: Metadata and error logs
+	- Ensure proper directory creation with fallback methods
+	- Verify directory accessibility before file operations
+
+### Metadata Management Requirements
+	- Track downloaded notes with comprehensive metadata
+	- Save note information including: title, timestamp, view count, restaurant name
+	- Track image files with original and new names, local paths, and ImgBB URLs
+	- Log upload errors for manual review
+	- Implement resume functionality to avoid duplicate downloads
+
+### Session Management Requirements
+	- Track session duration and note processing limits
+	- Implement auto-resume functionality for interrupted sessions
+	- Handle content growth detection during download sessions
+	- Log session statistics and progress information
