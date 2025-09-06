@@ -1,3 +1,5 @@
+## Workflow
+
 1. Make sure we're on the "笔记" tab. Let's call this the home page thereafter.
 2. Click on a note; it will go to the next page (as shown in screenshots/home-page.jpg).
 3. Download the picture:
@@ -9,12 +11,23 @@
 	6. Repeat steps 2-3 to download the picture.
 	7. Repeat the above until we've downloaded all the pictures. (We can tell the last one by "7/7".)
 4. Click the "<" at the top left corner (or call the back() method) to return to the step 2 page.
-5. Capture all the text of the note. We usually need to scroll down the screen to see all the text, depending on how long the note is. The note ends above the restaurant name (as shown in screenshots/note-text.jpg).
-6. Also, capture the name of the restaurant. To do this, click the component with the restaurant name; it will show another page (as shown in screenshots/restaurant-info.jpg) with the full name of the restaurant under "商户详情".
-7. Go back to the note page.
-8. We don't need to capture the user comments at the bottom part of the page.
-9. Put the text and pictures into a markdown file. We're done downloading one note. Go back to the home page.
-10. Download the next note. We may need to scroll the screen after downloading some notes.
-11. Here are some questions for you:
+5. After downloading all images from the note:
+	1. Copy all PNG images from `/Pictures` directory to organized structure. 
+	2. In the organized structure folder, convert each PNG image to JPG format with optimal quality settings.
+	3. Compare file sizes and compression ratios to ensure quality preservation.
+	4. Keep both PNG and JPG versions temporarily, then delete PNG files after successful conversion. Keep the original PNG files in `/Pictures`.
+	5. Update file paths in metadata to use JPG versions.
+6. Capture all the text of the note. We usually need to scroll down the screen to see all the text, depending on how long the note is. The note ends above the restaurant name (as shown in screenshots/note-text.jpg).
+7. Also, capture the name of the restaurant. To do this, click the component with the restaurant name; it will show another page (as shown in screenshots/restaurant-info.jpg) with the full name of the restaurant under "商户详情".
+8. Go back to the note page.
+9. We don't need to capture the user comments at the bottom part of the page.
+10. Put the text and pictures into a markdown file. We're done downloading one note. Go back to the home page.
+11. Download the next note. We may need to scroll the screen after downloading some notes.
+ 
+## Additional Requirements
 	1. We won't download all the notes in one go. We may want to accept an argument when running the script for how many notes we are going to download this time.
-	2. How can we remember where we were, since we don't want to duplicate what we have downloaded?
+
+### PNG to JPG Conversion Requirements
+	- Use Android's BitmapFactory for reliable conversion on mobile devices.
+	- Qality levels (90%)
+	- Log conversion statistics including file size reduction and compression ratios.
