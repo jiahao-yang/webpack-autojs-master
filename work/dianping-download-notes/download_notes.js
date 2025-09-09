@@ -51,7 +51,15 @@ const CONFIG = {
     maxSleepTime: 4000,  // Maximum sleep time in milliseconds
     saveOperationDelay: 3000, // Delay for save operations
     swipeDelay: 2000,    // Delay after swipe operations
-    menuClickDelay: 1500  // Delay after menu clicks
+    menuClickDelay: 1500,  // Delay after menu clicks
+    
+    // Note position verification and adjustment configuration
+    positionCheck: {
+        safeMargin: 100,          // Minimum margin from screen edges in pixels
+        visibilityThreshold: 0.7,  // Minimum visibility ratio (70%)
+        centerThreshold: 0.15,    // Distance from center threshold (15%)
+        scrollDuration: 800       // Duration for position adjustment scrolls in milliseconds
+    }
 };
 
 // State management
@@ -512,6 +520,413 @@ function clickNoteImage() {
  * @returns {boolean} - true if found undownloaded note, false if no more notes
  */
 /**
+ * Checks if a note element is properly positioned within the visible screen
+ * 检查笔记元素是否在可见屏幕内正确定位
+ * 
+ * @param {UiObject} element - The note element to check
+ * @returns {Object} - Position status with recommended action
+ */
+function checkNotePosition(element) {
+    const bounds = element.bounds();
+    const screenHeight = device.height;
+    const screenWidth = device.width;
+    const safeMargin = CONFIG.positionCheck.safeMargin;
+    
+    // Validate bounds to prevent negative height issues
+    const elementHeight = bounds.height();
+    if (elementHeight <= 0) {
+        toastLog(`⚠️ WARNING: Invalid element bounds (height: ${elementHeight}), assuming element needs positioning`);
+        // Treat invalid bounds as needing positioning
+        return {
+            isPositioned: false,
+            issue: "invalid_bounds",
+            action: "scroll_up",
+            distance: 300, // Default scroll distance
+            visibilityRatio: 0
+        };
+    }
+    
+    // CRITICAL: Check Y-axis positioning first (X-axis doesn't matter)
+    
+    // Check if element is completely below visible screen
+    if (bounds.top > screenHeight) {
+        const scrollDistance = bounds.top - screenHeight + safeMargin;
+        toastLog(`📍 Note is below screen (top=${bounds.top} > screenHeight=${screenHeight}), scrolling up ${Math.round(scrollDistance)}px`);
+        return {
+            isPositioned: false,
+            issue: "below_screen",
+            action: "scroll_up",
+            distance: scrollDistance,
+            visibilityRatio: 0
+        };
+    }
+    
+    // Check if element is completely above visible screen
+    if (bounds.bottom < 0) {
+        const scrollDistance = bounds.bottom - safeMargin;
+        toastLog(`📍 Note is above screen (bottom=${bounds.bottom} < 0), scrolling down ${Math.round(Math.abs(scrollDistance))}px`);
+        return {
+            isPositioned: false,
+            issue: "above_screen",
+            action: "scroll_down",
+            distance: scrollDistance,
+            visibilityRatio: 0
+        };
+    }
+    
+    // Check if element is partially visible (Y-axis visibility calculation)
+    const visibleTop = Math.max(bounds.top, 0);
+    const visibleBottom = Math.min(bounds.bottom, screenHeight);
+    const visibleHeight = visibleBottom - visibleTop;
+    const totalHeight = elementHeight;
+    const visibilityRatio = visibleHeight / totalHeight;
+    
+    if (visibilityRatio < CONFIG.positionCheck.visibilityThreshold) {
+        if (bounds.top < safeMargin) {
+            // Element is partially visible at top - scroll down
+            return {
+                isPositioned: false,
+                issue: "partially_visible_top",
+                action: "scroll_down",
+                visibilityRatio: visibilityRatio,
+                distance: bounds.top - safeMargin
+            };
+        } else if (bounds.bottom > screenHeight - safeMargin) {
+            // Element is partially visible at bottom - scroll up
+            return {
+                isPositioned: false,
+                issue: "partially_visible_bottom",
+                action: "scroll_up",
+                visibilityRatio: visibilityRatio,
+                distance: bounds.bottom - screenHeight + safeMargin
+            };
+        }
+    }
+    
+    // Check if element is too close to screen edges (Y-axis only)
+    if (bounds.top < safeMargin) {
+        return {
+            isPositioned: false,
+            issue: "near_top_edge",
+            action: "scroll_down",
+            distance: bounds.top - safeMargin
+        };
+    }
+    
+    if (bounds.bottom > screenHeight - safeMargin) {
+        return {
+            isPositioned: false,
+            issue: "near_bottom_edge",
+            action: "scroll_up",
+            distance: bounds.bottom - screenHeight + safeMargin
+        };
+    }
+    
+    // Check if element is centered well for clicking (Y-axis only)
+    const centerThreshold = screenHeight * CONFIG.positionCheck.centerThreshold;
+    const screenCenter = screenHeight / 2;
+    const elementCenter = bounds.centerY();
+    const distanceFromCenter = Math.abs(elementCenter - screenCenter);
+    
+    if (distanceFromCenter > centerThreshold) {
+        return {
+            isPositioned: true,
+            issue: "not_centered",
+            action: "optional_center",
+            distance: elementCenter - screenCenter,
+            visibilityRatio: visibilityRatio
+        };
+    }
+    
+    return {
+        isPositioned: true,
+        issue: "well_positioned",
+        action: "proceed",
+        visibilityRatio: visibilityRatio
+    };
+}
+
+/**
+ * Adjusts screen position to properly display a note element
+ * 调整屏幕位置以正确显示笔记元素
+ * 
+ * @param {UiObject} element - The note element to position
+ * @param {Object} positionStatus - Result from checkNotePosition()
+ * @param {string} noteTitle - The title of the note for tracking
+ * @param {number} noteIndex - The original index of the note
+ * @returns {boolean} - true if positioning was successful
+ */
+function adjustNotePosition(originalElement, originalPositionStatus, noteTitle = "", noteIndex = -1) {
+    try {
+        if (originalPositionStatus.action === "proceed") {
+            return true; // No adjustment needed
+        }
+        
+        const screenHeight = device.height;
+        const screenWidth = device.width;
+        const maxAttempts = 5; // Maximum positioning attempts
+        let attempt = 0;
+        
+        toastLog(`🎯 Starting iterative positioning for: ${originalPositionStatus.issue}`);
+        
+        // Always perform initial scroll for invalid bounds or below screen cases
+        if (originalPositionStatus.issue === "invalid_bounds" || originalPositionStatus.issue === "below_screen") {
+            attempt = 1; // Start with attempt 1 since we're doing the first scroll
+            
+            // Calculate initial scroll distance
+            let scrollDistance = screenHeight * 0.8; // Scroll up 80% of screen height
+            let scrollDirection = "up";
+            
+            // Calculate swipe parameters using the same pattern as working swipe
+            const startX = screenWidth / 2; // Center horizontally
+            const startY = screenHeight * 0.8; // Start from 80% down (same as working swipe)
+            const endX = screenWidth / 2; // Center horizontally
+            const endY = startY - scrollDistance; // Scroll up
+            
+            toastLog(`🔄 Attempt ${attempt}: Initial scroll up ${Math.round(scrollDistance)}px for ${originalPositionStatus.issue}`);
+            toastLog(`🔧 Swipe params: startX=${Math.round(startX)}, startY=${Math.round(startY)}, endX=${Math.round(endX)}, endY=${Math.round(endY)}, duration=500`);
+            
+            // Perform the scroll
+            toastLog(`⚡ Executing initial scroll...`);
+            swipe(startX, startY, endX, endY, 500);
+            toastLog(`✅ Initial scroll completed, waiting for UI to settle...`);
+            dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 500);
+            
+            // Small delay to let UI settle
+            sleep(500);
+            toastLog(`⏰ UI settlement delay completed`);
+        }
+        
+        while (attempt < maxAttempts) {
+            attempt++;
+            
+            // Find the note element again (previous reference may be invalid after scrolling)
+            const noteElements = desc("reculike_main_image").find();
+            const depth28NoteElements = [];
+            
+            for (let element of noteElements) {
+                if (element.depth() === 28) {
+                    depth28NoteElements.push(element);
+                }
+            }
+            
+            if (depth28NoteElements.length === 0) {
+                toastLog(`❌ Cannot find note elements on attempt ${attempt}`);
+                return false;
+            }
+            
+            // Find the target note using title and index for better tracking
+            let targetNote = findTargetNoteByTitleOrIndex(depth28NoteElements, noteTitle, noteIndex);
+            
+            // Check current position with validation
+            const bounds = targetNote.bounds();
+            const elementHeight = bounds.height();
+            
+            // Skip if bounds are still invalid
+            if (elementHeight <= 0) {
+                toastLog(`⚠️ Note still has invalid bounds (height: ${elementHeight}), continuing positioning...`);
+                
+                // Perform another scroll
+                const startX = screenWidth / 2;
+                const startY = screenHeight * 0.8;
+                const endX = screenWidth / 2;
+                const endY = startY - screenHeight * 0.5; // Scroll up 50%
+                
+                toastLog(`🔄 Attempt ${attempt}: Additional scroll for invalid bounds`);
+                toastLog(`🔧 Swipe params: startX=${Math.round(startX)}, startY=${Math.round(startY)}, endX=${Math.round(endX)}, endY=${Math.round(endY)}, duration=500`);
+                
+                swipe(startX, startY, endX, endY, 500);
+                dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 500);
+                continue;
+            }
+            
+            // Check current position
+            const currentPositionStatus = checkNotePosition(targetNote);
+            
+            toastLog(`📍 Attempt ${attempt}: ${currentPositionStatus.issue} (visibility: ${Math.round((currentPositionStatus.visibilityRatio || 0) * 100)}%)`);
+            
+            // If well positioned or in acceptable position, we're done
+            if (currentPositionStatus.issue === "well_positioned") {
+                toastLog(`✅ Note is well positioned after ${attempt} attempts`);
+                return true;
+            }
+            
+            // If note is in upper part of screen and visible, that's good enough
+            if (currentPositionStatus.visibilityRatio >= 0.8 && targetNote.bounds().centerY() < screenHeight * 0.4) {
+                toastLog(`✅ Note is in good upper position (visibility: ${Math.round(currentPositionStatus.visibilityRatio * 100)}%)`);
+                return true;
+            }
+            
+            // Calculate scroll distance based on current position
+            let scrollDistance;
+            let scrollDirection;
+            
+            if (attempt === 1) {
+                // First attempt: Use larger scroll distance for significant adjustments
+                switch (currentPositionStatus.issue) {
+                    case "below_screen":
+                    case "partially_visible_bottom":
+                    case "near_bottom_edge":
+                        scrollDistance = -screenHeight * 0.8; // Scroll up 80% of screen height
+                        scrollDirection = "up";
+                        break;
+                    case "above_screen":
+                    case "partially_visible_top":
+                    case "near_top_edge":
+                        scrollDistance = screenHeight * 0.5; // Scroll down 50% of screen height
+                        scrollDirection = "down";
+                        break;
+                    case "not_centered":
+                    case "invalid_bounds":
+                    default:
+                        // Center the element in upper part of screen (30% from top)
+                        const targetY = screenHeight * 0.3;
+                        const currentY = targetNote.bounds().centerY();
+                        scrollDistance = targetY - currentY;
+                        scrollDirection = scrollDistance > 0 ? "down" : "up";
+                        break;
+                }
+            } else {
+                // Subsequent attempts: Use smaller, more precise adjustments
+                const targetY = screenHeight * 0.3; // Target upper part of screen
+                const currentY = targetNote.bounds().centerY();
+                scrollDistance = targetY - currentY;
+                scrollDirection = scrollDistance > 0 ? "down" : "up";
+                
+                // Limit scroll distance for fine-tuning
+                const maxFineTuneDistance = screenHeight * 0.3;
+                scrollDistance = Math.max(-maxFineTuneDistance, Math.min(maxFineTuneDistance, scrollDistance));
+            }
+            
+            // Calculate swipe parameters using the same pattern as working swipe
+            const startX = screenWidth / 2; // Center horizontally
+            const startY = screenHeight * 0.8; // Start from 80% down (same as working swipe)
+            const endX = screenWidth / 2; // Center horizontally
+            let endY;
+            
+            if (scrollDirection === "up") {
+                // Scroll up: endY should be smaller than startY
+                endY = startY - Math.abs(scrollDistance);
+            } else {
+                // Scroll down: endY should be larger than startY
+                endY = startY + Math.abs(scrollDistance);
+            }
+            
+            // Ensure we don't scroll too far (keep within 5% to 95% of screen)
+            endY = Math.max(screenHeight * 0.05, Math.min(screenHeight * 0.95, endY));
+            
+            toastLog(`🔄 Attempt ${attempt}: ${scrollDirection} ${Math.round(Math.abs(scrollDistance))}px to position in upper screen`);
+            toastLog(`🔧 Swipe params: startX=${Math.round(startX)}, startY=${Math.round(startY)}, endX=${Math.round(endX)}, endY=${Math.round(endY)}, duration=500`);
+            
+            // Perform smooth scroll using same duration as working swipe
+            toastLog(`⚡ Executing swipe...`);
+            swipe(startX, startY, endX, endY, 500); // Use 500ms duration like working swipe
+            toastLog(`✅ Swipe completed, waiting for UI to settle...`);
+            dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 500);
+            
+            // Small delay to let UI settle
+            sleep(500);
+            toastLog(`⏰ UI settlement delay completed`);
+        }
+        
+        toastLog(`⚠️ Maximum positioning attempts (${maxAttempts}) reached, proceeding with current position`);
+        return true; // Proceed even if not perfectly positioned
+        
+    } catch (error) {
+        toastLog(`Error in iterative positioning: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Finds the target note by title or index after positioning
+ * 通过标题或索引定位目标笔记
+ * 
+ * @param {Array} noteElements - Array of note elements to search through
+ * @param {string} noteTitle - The title of the note to find
+ * @param {number} noteIndex - The original index of the note
+ * @returns {UiObject|null} - The found note element or null
+ */
+function findTargetNoteByTitleOrIndex(noteElements, noteTitle, noteIndex) {
+    try {
+        // If we have a title, try to find by title first
+        if (noteTitle && noteTitle.length > 0) {
+            // Get all text elements at depth 29
+            const textElements = className("android.widget.TextView").find();
+            const depth29TextViews = [];
+            
+            for (let element of textElements) {
+                if (element.depth() === 29) {
+                    depth29TextViews.push(element);
+                }
+            }
+            
+            // Find the text element with matching title
+            for (let i = 0; i < depth29TextViews.length; i++) {
+                if (depth29TextViews[i].text() === noteTitle) {
+                    // Found the title, now get the corresponding note element
+                    if (i < noteElements.length) {
+                        toastLog(`🎯 Found target note by title: "${noteTitle}" at index ${i}`);
+                        return noteElements[i];
+                    }
+                }
+            }
+            
+            toastLog(`⚠️ Could not find note by title "${noteTitle}", trying index fallback`);
+        }
+        
+        // Fallback to index-based selection
+        if (noteIndex >= 0 && noteIndex < noteElements.length) {
+            toastLog(`🎯 Using index fallback: note ${noteIndex}`);
+            return noteElements[noteIndex];
+        }
+        
+        // Last resort: use first element
+        if (noteElements.length > 0) {
+            toastLog(`⚠️ Using first available note as fallback`);
+            return noteElements[0];
+        }
+        
+        return null;
+    } catch (error) {
+        toastLog(`Error finding target note: ${error.message}`);
+        return null;
+    }
+}
+
+/**
+ * Finds the note after positioning is complete
+ * 定位完成后查找笔记
+ * 
+ * @param {string} noteTitle - The title of the note to find
+ * @param {number} noteIndex - The original index of the note
+ * @returns {UiObject|null} - The found note element or null
+ */
+function findNoteAfterPositioning(noteTitle, noteIndex) {
+    try {
+        // Find all note elements again
+        const noteElements = desc("reculike_main_image").find();
+        const depth28NoteElements = [];
+        
+        for (let element of noteElements) {
+            if (element.depth() === 28) {
+                depth28NoteElements.push(element);
+            }
+        }
+        
+        if (depth28NoteElements.length === 0) {
+            toastLog(`❌ No note elements found after positioning`);
+            return null;
+        }
+        
+        return findTargetNoteByTitleOrIndex(depth28NoteElements, noteTitle, noteIndex);
+    } catch (error) {
+        toastLog(`Error finding note after positioning: ${error.message}`);
+        return null;
+    }
+}
+
+/**
  * Finds the next undownloaded note from all visible notes at depth 29
  * 从深度29的所有可见笔记中找到下一个未下载的笔记
  * 
@@ -690,6 +1105,145 @@ function clickNoteByIndex(noteIndex) {
         return false;
     } catch (error) {
         toastLog(`Error clicking note at index ${noteIndex}: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Test function to verify swipe functionality
+ * 测试滑动功能
+ */
+function testSwipeFunction() {
+    try {
+        const screenHeight = device.height;
+        const screenWidth = device.width;
+        
+        toastLog(`🧪 Testing swipe functionality...`);
+        toastLog(`📱 Screen dimensions: ${screenWidth}x${screenHeight}`);
+        
+        // Test a simple upward swipe
+        const startX = screenWidth / 2;
+        const startY = screenHeight * 0.8;
+        const endX = screenWidth / 2;
+        const endY = screenHeight * 0.2;
+        
+        toastLog(`🔧 Test swipe params: startX=${Math.round(startX)}, startY=${Math.round(startY)}, endX=${Math.round(endX)}, endY=${Math.round(endY)}, duration=500`);
+        
+        // Perform test swipe
+        toastLog(`⚡ Executing test swipe...`);
+        swipe(startX, startY, endX, endY, 500);
+        toastLog(`✅ Test swipe completed!`);
+        
+        sleep(2000);
+        toastLog(`🧪 Test completed - check if screen moved`);
+        
+        return true;
+    } catch (error) {
+        toastLog(`❌ Test swipe failed: ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Enhanced version of clickNoteByIndex with position verification
+ * 增强版点击笔记函数，包含位置验证
+ * 
+ * @param {number} noteIndex - Index of the note to click
+ * @returns {boolean} - true if successful
+ */
+function clickNoteByIndexWithPositioning(noteIndex) {
+    try {
+        // Look for clickable note elements on home page with depth 28 safety check
+        const noteElements = desc("reculike_main_image").find();
+        const depth28NoteElements = [];
+        
+        // Filter elements at depth 28 only for safety
+        for (let element of noteElements) {
+            if (element.depth() === 28) {
+                depth28NoteElements.push(element);
+            }
+        }
+        
+        toastLog(`Found ${depth28NoteElements.length} note elements at depth 28`);
+        
+        if (depth28NoteElements.length === 0) {
+            toastLog("No note elements found at depth 28");
+            return false;
+        }
+        
+        // Check if the requested index is valid
+        if (noteIndex < 0 || noteIndex >= depth28NoteElements.length) {
+            toastLog(`❌ CRITICAL ERROR: Invalid note index: ${noteIndex}. Available notes at depth 28: ${depth28NoteElements.length}`);
+            toastLog(`❌ Stopping program for safety`);
+            throw new Error(`Invalid note index: ${noteIndex}, available: ${depth28NoteElements.length}`);
+        }
+        
+        const targetNote = depth28NoteElements[noteIndex];
+        
+        // Safety check: verify this is actually a note element
+        const elementDesc = targetNote.desc();
+        if (elementDesc !== "reculike_main_image") {
+            toastLog(`❌ CRITICAL ERROR: Element at index ${noteIndex} is not a note image (desc: ${elementDesc})`);
+            toastLog(`❌ Stopping program for safety`);
+            throw new Error(`Invalid element type at index ${noteIndex}: expected "reculike_main_image", got "${elementDesc}"`);
+        }
+        
+        // NEW: Check and adjust position before clicking
+        const positionStatus = checkNotePosition(targetNote);
+        toastLog(`Note position check: ${positionStatus.issue} (action: ${positionStatus.action})`);
+        
+        let finalNoteToClick = targetNote;
+        
+        if (!positionStatus.isPositioned || positionStatus.issue !== "well_positioned") {
+            // Get the note title for tracking after scrolling
+            let noteTitle = "";
+            try {
+                // Find the corresponding text element (depth 29) for this note
+                const textElements = className("android.widget.TextView").find();
+                const depth29TextViews = [];
+                
+                for (let element of textElements) {
+                    if (element.depth() === 29) {
+                        depth29TextViews.push(element);
+                    }
+                }
+                
+                // Get the title for the target note index
+                if (noteIndex < depth29TextViews.length) {
+                    noteTitle = depth29TextViews[noteIndex].text();
+                    toastLog(`📝 Targeting note: "${noteTitle}"`);
+                }
+            } catch (error) {
+                toastLog(`⚠️ Could not get note title for tracking: ${error.message}`);
+            }
+            
+            const adjustmentSuccess = adjustNotePosition(targetNote, positionStatus, noteTitle, noteIndex);
+            if (!adjustmentSuccess) {
+                toastLog(`Failed to adjust note position, attempting to click anyway`);
+            } else {
+                toastLog(`✅ Note positioning completed successfully`);
+                
+                // Find the note again after positioning
+                finalNoteToClick = findNoteAfterPositioning(noteTitle, noteIndex);
+                if (!finalNoteToClick) {
+                    toastLog(`⚠️ Could not find original note after positioning, using index-based fallback`);
+                    finalNoteToClick = targetNote; // Fallback to original
+                } else {
+                    toastLog(`✅ Successfully rediscovered target note after positioning`);
+                }
+            }
+        } else {
+            toastLog(`✅ Note is already well positioned`);
+        }
+        
+        // Proceed with the click
+        click(finalNoteToClick.bounds().centerX(), finalNoteToClick.bounds().centerY());
+        dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
+        toastLog(`Clicked on note at index ${noteIndex}`);
+        return true;
+        
+    } catch (error) {
+        toastLog(`Error clicking note at index ${noteIndex} with positioning: ${error.message}`);
         return false;
     }
 }
@@ -1100,6 +1654,154 @@ function organizeImagesWithTimestamp(downloadedFiles, postingDate, timestamp) {
         toastLog(`❌ Error organizing images: ${error.message}`);
         return [];
     }
+}
+
+/**
+ * Converts PNG image to JPG with quality preservation
+ * 将PNG图片转换为JPG，保持图片质量
+ * 
+ * @param {string} pngPath - Source PNG file path
+ * @param {string} jpgPath - Destination JPG file path
+ * @param {number} quality - JPG quality (0-100, default 90)
+ * @returns {Object} - Conversion result with success status and file info
+ */
+function convertPngToJpg(pngPath, jpgPath, quality = 90) {
+    const result = {
+        success: false,
+        sourceSize: 0,
+        destSize: 0,
+        compressionRatio: 0,
+        error: null
+    };
+    
+    try {
+        toastLog(`🔄 Converting PNG to JPG: ${pngPath} → ${jpgPath} (quality: ${quality}%)`);
+        
+        // Check if source file exists
+        if (!files.exists(pngPath)) {
+            result.error = `Source PNG file does not exist: ${pngPath}`;
+            toastLog(`❌ ${result.error}`);
+            return result;
+        }
+        
+        // Get source file size using Java File API for compatibility
+        result.sourceSize = new java.io.File(pngPath).length();
+        toastLog(`📊 PNG file size: ${(result.sourceSize / 1024).toFixed(2)} KB`);
+        
+        // Use Android's BitmapFactory for conversion
+        const bitmap = android.graphics.BitmapFactory.decodeFile(pngPath);
+        if (!bitmap) {
+            result.error = `Failed to decode PNG: ${pngPath}`;
+            toastLog(`❌ ${result.error}`);
+            return result;
+        }
+        
+        toastLog(`✅ Successfully decoded PNG (${bitmap.getWidth()}x${bitmap.getHeight()})`);
+        
+        // Ensure destination directory exists
+        const destDir = new java.io.File(jpgPath).getParent();
+        if (!files.exists(destDir)) {
+            files.ensureDir(destDir);
+            toastLog(`📁 Created destination directory: ${destDir}`);
+        }
+        
+        // Create output stream for JPG
+        const outputStream = new java.io.FileOutputStream(jpgPath);
+        const success = bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, outputStream);
+        outputStream.close();
+        bitmap.recycle();
+        
+        if (success) {
+            // Get destination file size
+            if (files.exists(jpgPath)) {
+                result.destSize = new java.io.File(jpgPath).length();
+                result.compressionRatio = ((result.sourceSize - result.destSize) / result.sourceSize * 100).toFixed(2);
+                result.success = true;
+                
+                toastLog(`✅ PNG to JPG conversion successful!`);
+                toastLog(`📊 JPG file size: ${(result.destSize / 1024).toFixed(2)} KB`);
+                toastLog(`📊 Compression ratio: ${result.compressionRatio}%`);
+                toastLog(`📊 File size reduction: ${((result.sourceSize - result.destSize) / 1024).toFixed(2)} KB`);
+            } else {
+                result.error = "JPG file was not created";
+                toastLog(`❌ ${result.error}`);
+            }
+        } else {
+            result.error = "Failed to compress to JPG";
+            toastLog(`❌ ${result.error}`);
+        }
+        
+    } catch (error) {
+        result.error = `Error during PNG to JPG conversion: ${error.message}`;
+        toastLog(`❌ ${result.error}`);
+    }
+    
+    return result;
+}
+
+/**
+ * Processes PNG to JPG conversion for all images in organized structure
+ * 处理组织结构中所有图片的PNG到JPG转换
+ * 
+ * @param {Array} pngImages - Array of PNG image objects from organizeImagesWithTimestamp
+ * @returns {Array} - Array of JPG image objects with conversion results
+ */
+function processPngToJpgConversion(pngImages) {
+    const jpgImages = [];
+    let conversionSuccessCount = 0;
+    let totalSizeReduction = 0;
+    
+    toastLog(`🔄 Starting PNG to JPG conversion for ${pngImages.length} images...`);
+    
+    for (let i = 0; i < pngImages.length; i++) {
+        const pngImage = pngImages[i];
+        
+        // Generate JPG filename (change extension from .png to .jpg)
+        const jpgName = pngImage.newName.replace(/\.png$/, '.jpg');
+        const jpgPath = files.join(new java.io.File(pngImage.path).getParent(), jpgName);
+        
+        toastLog(`🔄 Converting image ${i + 1}/${pngImages.length}: ${pngImage.newName}`);
+        
+        // Convert PNG to JPG
+        const conversionResult = convertPngToJpg(pngImage.path, jpgPath, 90);
+        
+        if (conversionResult.success) {
+            // Create JPG image object
+            const jpgImage = {
+                ...pngImage,
+                newName: jpgName,
+                path: jpgPath,
+                relativePath: pngImage.relativePath.replace(/\.png$/, '.jpg'),
+                conversionResult: conversionResult,
+                isJpg: true
+            };
+            
+            jpgImages.push(jpgImage);
+            conversionSuccessCount++;
+            totalSizeReduction += parseFloat(conversionResult.compressionRatio);
+            
+            toastLog(`✅ Successfully converted: ${pngImage.newName} → ${jpgName}`);
+        } else {
+            // If conversion fails, keep the original PNG
+            jpgImages.push({
+                ...pngImage,
+                conversionResult: conversionResult,
+                isJpg: false
+            });
+            
+            toastLog(`❌ Conversion failed for ${pngImage.newName}, keeping PNG version`);
+        }
+    }
+    
+    // Calculate average compression ratio
+    const avgCompression = conversionSuccessCount > 0 ? (totalSizeReduction / conversionSuccessCount).toFixed(2) : 0;
+    
+    toastLog(`📊 PNG to JPG conversion summary:`);
+    toastLog(`✅ Successfully converted: ${conversionSuccessCount}/${pngImages.length} images`);
+    toastLog(`📊 Average compression ratio: ${avgCompression}%`);
+    toastLog(`📊 Total size reduction: ${avgCompression}% average`);
+    
+    return jpgImages;
 }
 
 /**
@@ -1741,8 +2443,8 @@ function main() {
             const { title: noteTitle, index: noteIndex } = nextNote;
             toastLog(`✅ Found undownloaded note at index ${noteIndex}: ${noteTitle}`);
             
-            // Step 3: Navigate to note page for processing
-            const noteClickSuccess = clickNoteByIndex(noteIndex);
+            // Step 3: Navigate to note page for processing with position verification
+            const noteClickSuccess = clickNoteByIndexWithPositioning(noteIndex);
             if (!noteClickSuccess) {
                 toastLog(`❌ Failed to navigate to note page for note at index ${noteIndex}`);
                 break;
@@ -1783,44 +2485,52 @@ function main() {
                         toastLog(`✅ Successfully moved ${movedImages.length} images to organized structure!`);
                         toastLog(`✅ 成功移动 ${movedImages.length} 张图片到有组织的结构中！`);
                         
-                        // Step 7: Extract additional note data
-                        const noteContent = extractNoteContent();
-                        const viewCount = extractViewCount();
-                        const { postingDate, location } = extractNoteDateAndLocation();
+                        // Step 8.5: Convert PNG images to JPG format
+                        toastLog("Converting PNG images to JPG format...");
+                        const convertedImages = processPngToJpgConversion(movedImages);
                         
-                        // Step 8: Extract restaurant information (after scrolling from date/location extraction)
-                        const restaurantName = extractRestaurantInformation();
+                        if (convertedImages && convertedImages.length > 0) {
+                            toastLog(`✅ Successfully processed ${convertedImages.length} images for PNG to JPG conversion!`);
+                            toastLog(`✅ 成功处理 ${convertedImages.length} 张图片的PNG到JPG转换！`);
+                            
+                            // Step 9: Extract additional note data
+                            const noteContent = extractNoteContent();
+                            const viewCount = extractViewCount();
+                            const { postingDate, location } = extractNoteDateAndLocation();
+                            
+                            // Step 10: Extract restaurant information (after scrolling from date/location extraction)
+                            const restaurantName = extractRestaurantInformation();
+                            
+                            // Step 11: Create note data object for metadata
+                            const noteData = {
+                                title: noteTitle,
+                                timestamp: timestamp, // Use the same timestamp from image download
+                                viewCount: viewCount,
+                                restaurantName: restaurantName || "Unknown",
+                                imageCount: imageResult.imageCount,
+                                postingDate: postingDate,
+                                location: location,
+                                markdownFile: `note_${postingDate || 'unknown'}_${timestamp}.md`,
+                                contentHash: generateContentHash(noteContent),
+                                downloadDate: new Date().toISOString(),
+                                images: convertedImages, // Use converted images (JPG or fallback PNG)
+                                content: noteContent
+                            };
                         
-                        // Step 9: Create note data object for metadata
-                        const noteData = {
-                            title: noteTitle,
-                            timestamp: timestamp, // Use the same timestamp from image download
-                            viewCount: viewCount,
-                            restaurantName: restaurantName || "Unknown",
-                            imageCount: imageResult.imageCount,
-                            postingDate: postingDate,
-                            location: location,
-                            markdownFile: `note_${postingDate || 'unknown'}_${timestamp}.md`,
-                            contentHash: generateContentHash(noteContent),
-                            downloadDate: new Date().toISOString(),
-                            images: movedImages,
-                            content: noteContent
-                        };
-                        
-                        // Step 10: Generate internal markdown file
+                        // Step 12: Generate internal markdown file
                         const markdownPath = generateMarkdownOnMobile(noteData);
                         if (markdownPath) {
                             noteData.markdownPath = markdownPath;
                             toastLog(`✅ Generated internal markdown file: ${markdownPath}`);
                         }
                         
-                        // Step 11: Upload images to ImgBB for external hosting
+                        // Step 13: Upload images to ImgBB for external hosting
                         toastLog("📤 Starting ImgBB upload for external hosting...");
                         const uploadedImages = [];
                         let uploadSuccess = true;
                         
-                        for (let i = 0; i < movedImages.length; i++) {
-                            const image = movedImages[i];
+                        for (let i = 0; i < convertedImages.length; i++) {
+                            const image = convertedImages[i];
                             const imgbbUrl = uploadImageToImgBB(image.path, image.newName);
                             if (imgbbUrl) {
                                 uploadedImages.push({ ...image, imgbbUrl: imgbbUrl });
@@ -1842,17 +2552,17 @@ function main() {
                             continue; // Move to next iteration
                         }
                         
-                        // Step 12: Update noteData with uploaded images for external markdown generation
+                        // Step 14: Update noteData with uploaded images for external markdown generation
                         noteData.images = uploadedImages;
                         
-                        // Step 13: Generate external markdown with ImgBB URLs
+                        // Step 15: Generate external markdown with ImgBB URLs
                         const externalMarkdownPath = generateExternalMarkdown(noteData);
                         if (externalMarkdownPath) {
                             noteData.externalMarkdownPath = externalMarkdownPath;
                             toastLog(`✅ Generated external markdown file: ${externalMarkdownPath}`);
                         }
                         
-                        // Step 14: Update metadata with uploaded images
+                        // Step 16: Update metadata with uploaded images
                         addDownloadedNote(noteData);
                         processedCount++;
                         
@@ -1870,6 +2580,16 @@ function main() {
                         back();
                         dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
                         
+                    } else {
+                        toastLog("❌ Failed to convert images to JPG format");
+                        toastLog("❌ 转换图片为JPG格式失败");
+                        // Increment processedCount to avoid endless loop when maxNotesToDownload is 1
+                        processedCount++;
+                        // Go back to home page even if processing failed
+                        back();
+                        dynamicSleep(CONFIG.navigationDelay, CONFIG.navigationDelay + 1000);
+                    }
+                    
                     } else {
                         toastLog("❌ Failed to move images to organized structure");
                         toastLog("❌ 移动图片到有组织的结构失败");

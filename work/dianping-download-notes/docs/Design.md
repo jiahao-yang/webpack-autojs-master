@@ -22,7 +22,64 @@ Download user-created restaurant notes from Dianping app, including images and t
 
 ## 3. UI Interaction Best Practices (UI交互最佳实践)
 
-### 3.1 Position-Based Clicking (基于位置的点击)
+### 3.1 Note Position Verification (笔记位置验证)
+
+**CRITICAL**: Always verify note element position before clicking to ensure reliable interaction and prevent failed clicks on partially visible or poorly positioned elements.
+
+```javascript
+// Position verification before clicking
+const positionStatus = checkNotePosition(targetNote);
+if (!positionStatus.isPositioned) {
+    adjustNotePosition(targetNote, positionStatus);
+}
+click(targetNote.bounds().centerX(), targetNote.bounds().centerY());
+```
+
+**Position Verification Logic**:
+- **Visibility Check**: Ensure at least 70% of element is visible
+- **Safe Margins**: Maintain 100px minimum distance from screen edges
+- **Center Preference**: Optionally center elements for optimal clicking
+- **Edge Case Handling**: Detect off-screen, partially visible, and edge-proximate elements
+
+**Position Adjustment Strategy**:
+- **Iterative Positioning**: Multiple attempts to achieve optimal positioning
+- **Large Initial Scrolling**: First attempt uses 80% screen height for significant adjustments
+- **Fine-Tuning**: Subsequent attempts use smaller, precise adjustments (max 30% screen height)
+- **Upper Screen Targeting**: Positions notes in upper 30-40% of screen for optimal clicking
+- **Verification Loop**: Re-checks position after each scroll until well positioned
+- **Maximum Attempts**: Up to 5 positioning attempts before proceeding
+- **Element Rediscovery**: Finds note elements again after each scroll to handle invalid references
+
+**Note Tracking System**:
+- **Title-Based Tracking**: Capture note title before positioning for reliable rediscovery
+- **Multi-Strategy Rediscovery**: Find by title → index → first element fallback
+- **Swipe Parameter Optimization**: Use proven swipe patterns (80% screen height, 500ms duration)
+- **Comprehensive Logging**: Track positioning attempts and element rediscovery
+- **Misoperation Prevention**: Ensure correct note is clicked after scrolling
+
+**Working Implementation**:
+- **Fixed Swipe Execution**: Screen movement issue resolved by aligning with working swipe patterns
+- **Enhanced Element Tracking**: Title-based note tracking prevents misoperations after scrolling
+- **Robust Rediscovery**: Multi-strategy approach ensures target note is always found
+- **Error Resilience**: Graceful handling of edge cases and positioning failures
+
+**Configuration Parameters**:
+```javascript
+positionCheck: {
+    safeMargin: 100,          // Minimum margin from screen edges (pixels)
+    visibilityThreshold: 0.7,  // Minimum visibility ratio (70%)
+    centerThreshold: 0.15,    // Distance from center threshold (15%)
+    scrollDuration: 800       // Duration for adjustment scrolls (milliseconds)
+}
+```
+
+**Benefits**:
+- **Reliability**: Eliminates failed clicks on poorly positioned elements
+- **Adaptability**: Handles different screen sizes and scroll states
+- **User Experience**: Smoother, more predictable automation behavior
+- **Error Reduction**: Minimizes interaction failures and retries
+
+### 3.2 Position-Based Clicking (基于位置的点击)
 **CRITICAL**: Always use position-based clicking instead of direct element clicking for reliable UI interaction.
 
 ```javascript
@@ -115,7 +172,15 @@ const CONFIG = {
     maxSleepTime: 4000,  // Maximum sleep time in milliseconds
     saveOperationDelay: 3000, // Delay for save operations
     swipeDelay: 2000,    // Delay after swipe operations
-    menuClickDelay: 1500  // Delay after menu clicks
+    menuClickDelay: 1500,  // Delay after menu clicks
+    
+    // Note position verification and adjustment
+    positionCheck: {
+        safeMargin: 100,          // Minimum margin from screen edges in pixels
+        visibilityThreshold: 0.7,  // Minimum visibility ratio (70%)
+        centerThreshold: 0.15,    // Distance from center threshold (15%)
+        scrollDuration: 800       // Duration for position adjustment scrolls in milliseconds
+    },
     
     // Growth handling
     detectNewNotes: true,
@@ -837,10 +902,18 @@ function resumeFromMetadata() {
 - Verify navigation with sleep delay
 
 #### Step 2: Click on Specific Note to Navigate
-**Requirement**: Click on the specific undownloaded note; it will go to the next page (as shown in screenshots/home-page.jpg).
+**Requirement**: Click on the specific undownloaded note; it will go to the next page (as shown in screenshots/home-page.jpg). **NEW**: Verify note position before clicking to ensure reliable interaction.
 **Implementation**:
-- Use `clickNoteByIndex(noteIndex)` function
+- Use `clickNoteByIndexWithPositioning(noteIndex)` function (enhanced version)
 - Find elements with `desc("reculike_main_image")` on home page
+- **Position Verification**: Check if note is properly positioned within visible screen:
+  - Verify at least 70% visibility ratio
+  - Ensure 100px minimum margin from screen edges
+  - Optionally center note for optimal clicking
+- **Position Adjustment**: If positioning inadequate, automatically scroll to adjust:
+  - Calculate required scroll distance based on element bounds
+  - Perform smooth swipe movement for precise positioning
+  - Verify adjustment success before proceeding
 - Click the specific note at the returned index from `findNextUndownloadedNote()`
 - Use position-based clicking to navigate to note page
 - Wait for page transition with navigation delay

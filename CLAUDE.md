@@ -82,3 +82,4 @@ Compiled projects are placed in `dist/` directory with optional project prefix. 
 ## AutoX.js API
 For available functions provided by AutoX.js, please refer to the following link:
 https://github.com/autox-community/AutoX_Docs/tree/master/docs
+- Build the script after changes in this project
