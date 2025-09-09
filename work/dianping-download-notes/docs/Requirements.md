@@ -103,3 +103,29 @@
 - Robust error handling and fallback mechanisms
 
 **Test Results**: ✅ All positioning and tracking functionality working correctly as verified by user testing
+
+### Single Image Handling Enhancement
+**NEW FEATURE** - Added support for notes with single images where no image counter exists
+
+**Problem Solved**: 
+- Notes with only one image don't show image counter (like "1/3")
+- Previous logic would exit gallery immediately without downloading the image
+- Single image notes were being skipped entirely
+
+**Implementation**:
+- **Detection Logic**: Checks for presence/absence of image counter pattern `/^\d+\s*\/\s*\d+$/`
+- **Dual Processing**: Separate functions for multi-image vs single image scenarios
+- **Gallery Verification**: Multiple indicators confirm gallery view before single image download
+- **Robust Fallback**: Uses gallery view detection when counter is absent
+
+**Functions Added**:
+- `processMultipleImagesWithCounter()` - Handles notes with image counters (existing logic)
+- `processSingleImage()` - Handles notes without image counters (new logic)
+
+**Gallery Indicators for Single Images**:
+- `desc("reculike_main_image").exists()` - Main image element present
+- `className("android.widget.ImageView").find().length > 0` - ImageView elements exist
+- `textMatches(/^\d+$/).exists()` - Single number without slash (some single image formats)
+- `findAndClickMenuButton() !== false` - Menu button is accessible
+
+**Status**: ✅ Implemented and tested - single image notes will now be downloaded correctly

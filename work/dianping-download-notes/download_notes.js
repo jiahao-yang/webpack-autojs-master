@@ -1459,38 +1459,17 @@ function downloadNoteImagesTemp(timestamp) {
     // Gallery is already open from previous clickNoteImage() call
     // No need to call clickNoteImage() again
     
-    // Process each image in gallery
-    while (true) {
-        // Check if we're still in gallery
-        const imageCounter = textMatches(/^\d+\s*\/\s*\d+$/).findOne(2000);
-        if (!imageCounter) {
-            toastLog("No image counter found, exiting gallery");
-            break;
-        }
-        
-        const counterText = imageCounter.text();
-        const [currentImage, totalImages] = counterText.split('/').map(Number);
-        
-        toastLog(`Processing image ${currentImage}/${totalImages}`);
-        
-        // Download current image with temp naming
-        const tempImagePath = downloadCurrentImageTemp(timestamp, currentImage);
-        if (tempImagePath) {
-            tempImagePaths.push(tempImagePath);
-            imageCount++;
-        }
-        
-        // Move to next image or exit
-        if (currentImage < totalImages) {
-            if (!swipeToNextImage()) {
-                toastLog("Failed to swipe to next image");
-                break;
-            }
-            dynamicSleep(CONFIG.imageDownloadDelay, CONFIG.imageDownloadDelay + 1000);
-        } else {
-            toastLog("Reached last image");
-            break;
-        }
+    // Check if we're in a gallery with multiple images (has image counter)
+    const imageCounter = textMatches(/^\d+\s*\/\s*\d+$/).findOne(2000);
+    
+    if (imageCounter) {
+        // Multiple images scenario - process with counter
+        toastLog(`🖼️ Multiple images detected with counter: ${imageCounter.text()}`);
+        processMultipleImagesWithCounter(timestamp, tempImagePaths);
+    } else {
+        // Single image scenario - no counter found
+        toastLog(`🖼️ Single image detected - no image counter found`);
+        processSingleImage(timestamp, tempImagePaths);
     }
     
     // Exit gallery
@@ -1507,8 +1486,99 @@ function downloadNoteImagesTemp(timestamp) {
     const newFiles = finalFiles.filter(file => !initialFiles.includes(file));
     toastLog(`📁 Newly downloaded files: ${newFiles.length}`);
     
+    imageCount = tempImagePaths.length;
     toastLog(`Downloaded ${imageCount} temp images with timestamp ${timestamp}`);
     return { imageCount, tempImagePaths, newFiles };
+}
+
+/**
+ * Processes multiple images when image counter is present
+ * 当图像计数器存在时处理多个图像
+ * 
+ * @param {string} timestamp - Unique timestamp for naming
+ * @param {Array} tempImagePaths - Array to store temp image paths
+ */
+function processMultipleImagesWithCounter(timestamp, tempImagePaths) {
+    toastLog(`Processing multiple images with counter`);
+    
+    while (true) {
+        // Check if we're still in gallery
+        const imageCounter = textMatches(/^\d+\s*\/\s*\d+$/).findOne(2000);
+        if (!imageCounter) {
+            toastLog("Image counter disappeared, exiting gallery");
+            break;
+        }
+        
+        const counterText = imageCounter.text();
+        const [currentImage, totalImages] = counterText.split('/').map(Number);
+        
+        toastLog(`Processing image ${currentImage}/${totalImages}`);
+        
+        // Download current image with temp naming
+        const tempImagePath = downloadCurrentImageTemp(timestamp, currentImage);
+        if (tempImagePath) {
+            tempImagePaths.push(tempImagePath);
+        }
+        
+        // Move to next image or exit
+        if (currentImage < totalImages) {
+            if (!swipeToNextImage()) {
+                toastLog("Failed to swipe to next image");
+                break;
+            }
+            dynamicSleep(CONFIG.imageDownloadDelay, CONFIG.imageDownloadDelay + 1000);
+        } else {
+            toastLog("Reached last image");
+            break;
+        }
+    }
+}
+
+/**
+ * Processes single image when no image counter is found
+ * 当没有找到图像计数器时处理单个图像
+ * 
+ * @param {string} timestamp - Unique timestamp for naming
+ * @param {Array} tempImagePaths - Array to store temp image paths
+ */
+function processSingleImage(timestamp, tempImagePaths) {
+    toastLog(`Processing single image without counter`);
+    
+    // Verify we're still in image view by checking for gallery indicators
+    const galleryIndicators = [
+        () => desc("reculike_main_image").exists(),
+        () => className("android.widget.ImageView").find().length > 0,
+        () => textMatches(/^\d+$/).exists(), // Single number without slash
+        () => findAndClickMenuButton() !== false // Menu button accessible
+    ];
+    
+    let inGallery = false;
+    for (let indicator of galleryIndicators) {
+        try {
+            if (indicator()) {
+                inGallery = true;
+                break;
+            }
+        } catch (error) {
+            // Continue to next indicator
+        }
+    }
+    
+    if (!inGallery) {
+        toastLog("❌ Not in gallery view, skipping single image download");
+        return;
+    }
+    
+    toastLog("✅ Confirmed in gallery view, downloading single image");
+    
+    // Download the single image with image number 1
+    const tempImagePath = downloadCurrentImageTemp(timestamp, 1);
+    if (tempImagePath) {
+        tempImagePaths.push(tempImagePath);
+        toastLog("✅ Single image downloaded successfully");
+    } else {
+        toastLog("❌ Failed to download single image");
+    }
 }
 
 /**

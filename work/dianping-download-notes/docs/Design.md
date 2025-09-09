@@ -62,6 +62,13 @@ click(targetNote.bounds().centerX(), targetNote.bounds().centerY());
 - **Enhanced Element Tracking**: Title-based note tracking prevents misoperations after scrolling
 - **Robust Rediscovery**: Multi-strategy approach ensures target note is always found
 - **Error Resilience**: Graceful handling of edge cases and positioning failures
+- **Single Image Support**: Handles notes with single images where no image counter exists
+
+**Single Image Handling**:
+- **Automatic Detection**: Detects single image notes by absence of image counter (like "1/3")
+- **Gallery Verification**: Confirms gallery view using multiple indicators before download
+- **Robust Download**: Downloads single image without relying on counter-based pagination
+- **Seamless Integration**: Works within existing multi-image download workflow
 
 **Configuration Parameters**:
 ```javascript
